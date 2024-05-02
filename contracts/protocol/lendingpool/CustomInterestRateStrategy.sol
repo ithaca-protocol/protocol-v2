@@ -10,24 +10,16 @@ import {ILendingRateOracle} from '../../interfaces/ILendingRateOracle.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
 
 /**
- * @title DefaultReserveInterestRateStrategy contract
+ * @title CustomReserveInterestRateStrategy contract
  * @notice Implements the calculation of the interest rates depending on the reserve state
- * @dev The model of interest rate is based on 2 slopes, one before the `OPTIMAL_UTILIZATION_RATE`
- * point of utilization and another from that one to 100%
+ * @dev The model of interest rate is based on a custom implementation
  * - An instance of this same contract, can't be used across different Aave markets, due to the caching
  *   of the LendingPoolAddressesProvider
- * @author Aave
  **/
 contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
   using WadRayMath for uint256;
   using SafeMath for uint256;
   using PercentageMath for uint256;
-
-  /**
-   * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
-   * 1-optimal utilization rate. Added as a constant here for gas optimizations.
-   * Expressed in ray
-   **/
 
   ILendingPoolAddressesProvider public immutable addressesProvider;
 
@@ -65,7 +57,6 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     uint256 reserveFactor
   ) external view override returns (uint256, uint256, uint256) {
     uint256 availableLiquidity = IERC20(reserve).balanceOf(aToken);
-    //avoid stack too deep
     availableLiquidity = availableLiquidity.add(liquidityAdded).sub(liquidityTaken);
 
     return
