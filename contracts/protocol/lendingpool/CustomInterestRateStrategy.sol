@@ -23,6 +23,18 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
   using SafeMath for uint256;
   using PercentageMath for uint256;
 
+  /**
+   * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
+   * 1-optimal utilization rate. Added as a constant here for gas optimizations.
+   * Expressed in ray
+   **/
+
+  ILendingPoolAddressesProvider public immutable addressesProvider;
+
+  constructor(ILendingPoolAddressesProvider provider) public {
+    addressesProvider = provider;
+  }
+
   function baseVariableBorrowRate() external view override returns (uint256) {
     return 0;
   }
@@ -102,12 +114,19 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     vars.currentStableBorrowRate = 0;
     vars.currentLiquidityRate = 0;
 
+    vars.currentStableBorrowRate = ILendingRateOracle(addressesProvider.getLendingRateOracle())
+      .getMarketBorrowRate(reserve);
+
     vars.utilizationRate = vars.totalDebt == 0
       ? 0
       : vars.totalDebt.rayDiv(availableLiquidity.add(vars.totalDebt));
 
-    vars.currentVariableBorrowRate = uint256(50e25) + (uint256(493e24).rayMul(vars.utilizationRate));
-    vars.currentLiquidityRate = vars.utilizationRate.rayMul(uint256(55e25) + uint256(488e24).rayMul(vars.utilizationRate));
+    vars.currentVariableBorrowRate =
+      uint256(50e25) +
+      (uint256(493e24).rayMul(vars.utilizationRate));
+    vars.currentLiquidityRate = vars.utilizationRate.rayMul(
+      uint256(55e25) + uint256(488e24).rayMul(vars.utilizationRate)
+    );
 
     return (
       vars.currentLiquidityRate,
@@ -115,5 +134,4 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
       vars.currentVariableBorrowRate
     );
   }
-
 }
