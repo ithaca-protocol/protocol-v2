@@ -23,78 +23,12 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
   using SafeMath for uint256;
   using PercentageMath for uint256;
 
-  /**
-   * @dev this constant represents the utilization rate at which the pool aims to obtain most competitive borrow rates.
-   * Expressed in ray
-   **/
-  uint256 public immutable OPTIMAL_UTILIZATION_RATE;
-
-  /**
-   * @dev This constant represents the excess utilization rate above the optimal. It's always equal to
-   * 1-optimal utilization rate. Added as a constant here for gas optimizations.
-   * Expressed in ray
-   **/
-
-  uint256 public immutable EXCESS_UTILIZATION_RATE;
-
-  ILendingPoolAddressesProvider public immutable addressesProvider;
-
-  // Base variable borrow rate when Utilization rate = 0. Expressed in ray
-  uint256 internal immutable _baseVariableBorrowRate;
-
-  // Slope of the variable interest curve when utilization rate > 0 and <= OPTIMAL_UTILIZATION_RATE. Expressed in ray
-  uint256 internal immutable _variableRateSlope1;
-
-  // Slope of the variable interest curve when utilization rate > OPTIMAL_UTILIZATION_RATE. Expressed in ray
-  uint256 internal immutable _variableRateSlope2;
-
-  // Slope of the stable interest curve when utilization rate > 0 and <= OPTIMAL_UTILIZATION_RATE. Expressed in ray
-  uint256 internal immutable _stableRateSlope1;
-
-  // Slope of the stable interest curve when utilization rate > OPTIMAL_UTILIZATION_RATE. Expressed in ray
-  uint256 internal immutable _stableRateSlope2;
-
-  constructor(
-    ILendingPoolAddressesProvider provider,
-    uint256 optimalUtilizationRate,
-    uint256 baseVariableBorrowRate,
-    uint256 variableRateSlope1,
-    uint256 variableRateSlope2,
-    uint256 stableRateSlope1,
-    uint256 stableRateSlope2
-  ) public {
-    OPTIMAL_UTILIZATION_RATE = optimalUtilizationRate;
-    EXCESS_UTILIZATION_RATE = WadRayMath.ray().sub(optimalUtilizationRate);
-    addressesProvider = provider;
-    _baseVariableBorrowRate = baseVariableBorrowRate;
-    _variableRateSlope1 = variableRateSlope1;
-    _variableRateSlope2 = variableRateSlope2;
-    _stableRateSlope1 = stableRateSlope1;
-    _stableRateSlope2 = stableRateSlope2;
-  }
-
-  function variableRateSlope1() external view returns (uint256) {
-    return _variableRateSlope1;
-  }
-
-  function variableRateSlope2() external view returns (uint256) {
-    return _variableRateSlope2;
-  }
-
-  function stableRateSlope1() external view returns (uint256) {
-    return _stableRateSlope1;
-  }
-
-  function stableRateSlope2() external view returns (uint256) {
-    return _stableRateSlope2;
-  }
-
   function baseVariableBorrowRate() external view override returns (uint256) {
-    return _baseVariableBorrowRate;
+    return 0;
   }
 
   function getMaxVariableBorrowRate() external view override returns (uint256) {
-    return _baseVariableBorrowRate.add(_variableRateSlope1).add(_variableRateSlope2);
+    return 0;
   }
 
   /**
@@ -182,32 +116,4 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     );
   }
 
-  /**
-   * @dev Calculates the overall borrow rate as the weighted average between the total variable debt and total stable debt
-   * @param totalStableDebt The total borrowed from the reserve a stable rate
-   * @param totalVariableDebt The total borrowed from the reserve at a variable rate
-   * @param currentVariableBorrowRate The current variable borrow rate of the reserve
-   * @param currentAverageStableBorrowRate The current weighted average of all the stable rate loans
-   * @return The weighted averaged borrow rate
-   **/
-  function _getOverallBorrowRate(
-    uint256 totalStableDebt,
-    uint256 totalVariableDebt,
-    uint256 currentVariableBorrowRate,
-    uint256 currentAverageStableBorrowRate
-  ) internal pure returns (uint256) {
-    uint256 totalDebt = totalStableDebt.add(totalVariableDebt);
-
-    if (totalDebt == 0) return 0;
-
-    uint256 weightedVariableRate = totalVariableDebt.wadToRay().rayMul(currentVariableBorrowRate);
-
-    uint256 weightedStableRate = totalStableDebt.wadToRay().rayMul(currentAverageStableBorrowRate);
-
-    uint256 overallBorrowRate = weightedVariableRate.add(weightedStableRate).rayDiv(
-      totalDebt.wadToRay()
-    );
-
-    return overallBorrowRate;
-  }
 }
