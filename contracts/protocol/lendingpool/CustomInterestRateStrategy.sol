@@ -113,10 +113,10 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
       : vars.totalDebt.rayDiv(availableLiquidity.add(vars.totalDebt));
 
     vars.currentVariableBorrowRate =
-      uint256(50e25) +
-      (uint256(493e24).rayMul(vars.utilizationRate));
+      uint256(50e23) +
+      (uint256(493e23).rayMul(vars.utilizationRate));
     vars.currentLiquidityRate = vars.utilizationRate.rayMul(
-      uint256(55e25) + uint256(488e24).rayMul(vars.utilizationRate)
+      uint256(55e23) + uint256(488e23).rayMul(vars.utilizationRate)
     );
 
     return (
