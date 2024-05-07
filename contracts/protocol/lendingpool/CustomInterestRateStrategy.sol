@@ -23,8 +23,39 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
 
   ILendingPoolAddressesProvider public immutable addressesProvider;
 
-  constructor(ILendingPoolAddressesProvider provider) public {
+  uint256 internal _slope;
+  uint256 internal _reserveFactor;
+  uint256 internal _withdrawalShockProbability;
+  uint256 internal _intercept;
+
+  constructor(
+    ILendingPoolAddressesProvider provider,
+    uint256 withdrawalShockProbability,
+    uint256 slope,
+    uint256 intercept,
+    uint256 reserveFactor
+  ) public {
     addressesProvider = provider;
+    _withdrawalShockProbability = withdrawalShockProbability;
+    _slope = slope;
+    _intercept = intercept;
+    _reserveFactor = reserveFactor;
+  }
+
+  function slope() external view returns (uint256) {
+    return _slope;
+  }
+
+  function intercept() external view returns (uint256) {
+    return _intercept;
+  }
+
+  function reserveFactor() external view returns (uint256) {
+    return _reserveFactor;
+  }
+
+  function withdrawalShockProbability() external view returns (uint256) {
+    return _withdrawalShockProbability;
   }
 
   function baseVariableBorrowRate() external view override returns (uint256) {
@@ -112,11 +143,31 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
       ? 0
       : vars.totalDebt.rayDiv(availableLiquidity.add(vars.totalDebt));
 
+    // a = intercept
+    // m = slope
+    // q = probability of withdrawal shock
+    // η = reserve factor
+    // U⋆(θ; ρ) = utilizationRate
+    // E[ρ(θ)] = a + m · (1 + (η · q) / (1 - η)) · U⋆(θ; ρ)
+
     vars.currentVariableBorrowRate =
-      uint256(50e23) +
-      (uint256(493e23).rayMul(vars.utilizationRate));
+      _intercept +
+      _slope
+        .rayMul(
+          uint256(1) +
+            _reserveFactor.rayMul(_withdrawalShockProbability).rayDiv(uint256(1) - _reserveFactor)
+        )
+        .rayMul(vars.utilizationRate);
+
+    // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
+
     vars.currentLiquidityRate = vars.utilizationRate.rayMul(
-      uint256(55e23) + uint256(488e23).rayMul(vars.utilizationRate)
+      ((uint256(1) - _withdrawalShockProbability).rayMul(
+        _intercept + _slope.rayMul(vars.utilizationRate)
+      ) +
+        _withdrawalShockProbability.rayMul(uint256(1) - _reserveFactor).rayMul(
+          (_intercept + _slope.rayMul(uint256(1).rayDiv(_reserveFactor)))
+        ))
     );
 
     return (
