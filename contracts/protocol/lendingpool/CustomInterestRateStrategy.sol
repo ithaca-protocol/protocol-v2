@@ -8,6 +8,7 @@ import {PercentageMath} from '../libraries/math/PercentageMath.sol';
 import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 import {ILendingRateOracle} from '../../interfaces/ILendingRateOracle.sol';
 import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 
 /**
  * @title CustomReserveInterestRateStrategy contract
@@ -16,7 +17,7 @@ import {IERC20} from '../../dependencies/openzeppelin/contracts/IERC20.sol';
  * - An instance of this same contract, can't be used across different Aave markets, due to the caching
  *   of the LendingPoolAddressesProvider
  **/
-contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
+contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy, Ownable {
   using WadRayMath for uint256;
   using SafeMath for uint256;
   using PercentageMath for uint256;
@@ -28,7 +29,6 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
   uint256 internal _withdrawalShockProbability;
   uint256 internal _intercept;
   address internal _governance;
-  address internal immutable _owner;
 
   constructor(
     ILendingPoolAddressesProvider provider,
@@ -36,8 +36,7 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     uint256 slope,
     uint256 intercept,
     uint256 reserveFactor,
-    address governance,
-    address owner
+    address governance
   ) public {
     addressesProvider = provider;
     _withdrawalShockProbability = withdrawalShockProbability;
@@ -45,16 +44,10 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     _intercept = intercept;
     _reserveFactor = reserveFactor;
     _governance = governance;
-    _owner = owner;
   }
 
   modifier onlyGovernance() {
     require(msg.sender == _governance, 'NotGovernance');
-    _;
-  }
-
-  modifier onlyOwner() {
-    require(msg.sender == _owner, 'NotOwner');
     _;
   }
 
@@ -92,13 +85,9 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
     return _withdrawalShockProbability;
   }
 
-  function baseVariableBorrowRate() external view override returns (uint256) {
-    return 0;
-  }
+  function baseVariableBorrowRate() external view override returns (uint256) {}
 
-  function getMaxVariableBorrowRate() external view override returns (uint256) {
-    return 0;
-  }
+  function getMaxVariableBorrowRate() external view override returns (uint256) {}
 
   /**
    * @dev Calculates the interest rates depending on the reserve's state and configurations
@@ -188,19 +177,21 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
       _intercept +
       _slope
         .rayMul(
-          uint256(1e27) +
-            _reserveFactor.rayMul(_withdrawalShockProbability).rayDiv(uint256(1e27) - _reserveFactor)
+          WadRayMath.ray() +
+            _reserveFactor.rayMul(_withdrawalShockProbability).rayDiv(
+              WadRayMath.ray() - _reserveFactor
+            )
         )
         .rayMul(vars.utilizationRate);
 
     // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
 
     vars.currentLiquidityRate = vars.utilizationRate.rayMul(
-      ((uint256(1e27) - _withdrawalShockProbability).rayMul(
+      ((WadRayMath.ray() - _withdrawalShockProbability).rayMul(
         _intercept + _slope.rayMul(vars.utilizationRate)
       ) +
-        _withdrawalShockProbability.rayMul(uint256(1e27) - _reserveFactor).rayMul(
-          (_intercept + _slope.rayMul(uint256(1e27).rayDiv(uint256(1e27) - _reserveFactor)))
+        _withdrawalShockProbability.rayMul(WadRayMath.ray() - _reserveFactor).rayMul(
+          (_intercept + _slope.rayMul(WadRayMath.ray().rayDiv(WadRayMath.ray() - _reserveFactor)))
         ))
     );
 
