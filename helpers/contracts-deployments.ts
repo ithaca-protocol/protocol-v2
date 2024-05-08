@@ -376,7 +376,7 @@ export const deployDefaultReserveInterestRateStrategy = async (
   );
 
 export const deployCustomReserveInterestRateStrategy = async (
-  args: [tEthereumAddress, string, string, string, string, tEthereumAddress, tEthereumAddress],
+  args: [tEthereumAddress, string, string, string, string, tEthereumAddress],
   verify: boolean
 ) =>
   withSaveAndVerify(
