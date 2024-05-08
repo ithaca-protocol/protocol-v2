@@ -27,19 +27,39 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
   uint256 internal _reserveFactor;
   uint256 internal _withdrawalShockProbability;
   uint256 internal _intercept;
+  address internal _governance;
+  address internal immutable _owner;
 
   constructor(
     ILendingPoolAddressesProvider provider,
     uint256 withdrawalShockProbability,
     uint256 slope,
     uint256 intercept,
-    uint256 reserveFactor
+    uint256 reserveFactor,
+    address governance,
+    address owner
   ) public {
     addressesProvider = provider;
     _withdrawalShockProbability = withdrawalShockProbability;
     _slope = slope;
     _intercept = intercept;
     _reserveFactor = reserveFactor;
+    _governance = governance;
+    _owner = owner;
+  }
+
+  modifier onlyGovernance() {
+    require(msg.sender == _governance, 'NotGovernance');
+    _;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == _owner, 'NotOwner');
+    _;
+  }
+
+  function setGovernance(address governance) external onlyOwner {
+    _governance = governance;
   }
 
   function slope() external view returns (uint256) {
@@ -52,6 +72,20 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
 
   function reserveFactor() external view returns (uint256) {
     return _reserveFactor;
+  }
+
+  function setIntercept(uint256 intercept) external onlyGovernance {
+    _intercept = intercept;
+  }
+
+  function setSlope(uint256 slope) external onlyGovernance {
+    _slope = slope;
+  }
+
+  function setWithdrawalShockProbability(
+    uint256 withdrawalShockProbability
+  ) external onlyGovernance {
+    _withdrawalShockProbability = withdrawalShockProbability;
   }
 
   function withdrawalShockProbability() external view returns (uint256) {
@@ -154,19 +188,19 @@ contract CustomReserveInterestRateStrategy is IReserveInterestRateStrategy {
       _intercept +
       _slope
         .rayMul(
-          uint256(1) +
-            _reserveFactor.rayMul(_withdrawalShockProbability).rayDiv(uint256(1) - _reserveFactor)
+          uint256(1e27) +
+            _reserveFactor.rayMul(_withdrawalShockProbability).rayDiv(uint256(1e27) - _reserveFactor)
         )
         .rayMul(vars.utilizationRate);
 
     // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
 
     vars.currentLiquidityRate = vars.utilizationRate.rayMul(
-      ((uint256(1) - _withdrawalShockProbability).rayMul(
+      ((uint256(1e27) - _withdrawalShockProbability).rayMul(
         _intercept + _slope.rayMul(vars.utilizationRate)
       ) +
-        _withdrawalShockProbability.rayMul(uint256(1) - _reserveFactor).rayMul(
-          (_intercept + _slope.rayMul(uint256(1).rayDiv(_reserveFactor)))
+        _withdrawalShockProbability.rayMul(uint256(1e27) - _reserveFactor).rayMul(
+          (_intercept + _slope.rayMul(uint256(1e27).rayDiv(uint256(1e27) - _reserveFactor)))
         ))
     );
 
