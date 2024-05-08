@@ -1,4 +1,5 @@
 import { TestEnv, makeSuite } from './helpers/make-suite';
+import { getSigners } from '../../helpers/misc-utils';
 import { deployCustomReserveInterestRateStrategy} from '../../helpers/contracts-deployments';
 
 import { RAY } from '../../helpers/constants';
@@ -23,9 +24,20 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
 
     const { addressesProvider } = testEnv;
 
+    const signers = await getSigners();
+
+    const owner = signers[0];
+    const governance = signers[1];
+
     strategyInstance = await deployCustomReserveInterestRateStrategy(
       [
         addressesProvider.address,
+        3e26.toLocaleString('fullwide', {useGrouping:false}),
+        8e25.toLocaleString('fullwide', {useGrouping:false}),
+        1e26.toLocaleString('fullwide', {useGrouping:false}),
+        5e26.toLocaleString('fullwide', {useGrouping:false}),
+        owner.address,
+        governance.address
       ],
       false
     );
@@ -47,6 +59,23 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
       strategyDAI.reserveFactor
     );
 
+    // a = intercept
+    // m = slope
+    // q = probability of withdrawal shock
+    // η = reserve factor
+    // U⋆(θ; ρ) = utilizationRate
+    // borrowing rate
+    // E[ρ(θ)] = a + m · (1 + (η · q) / (1 - η)) · U⋆(θ; ρ)
+    // liquidity rate
+    // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
+    // here - 
+    // a = .1
+    // m = .08
+    // q = .3
+    // n = .5
+
+    const expectedBorrowingRate = new BigNumber(.1).times(RAY);
+
     expect(currentLiquidityRate.toString()).to.be.equal('0', 'Invalid liquidity rate');
     expect(currentStableBorrowRate.toString()).to.be.equal(
       new BigNumber(0.039).times(RAY).toFixed(0),
@@ -54,7 +83,7 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
     );
 
     expect(currentVariableBorrowRate.toString()).to.be.equal(
-      (50e23).toLocaleString('fullwide', {useGrouping:false}),
+      expectedBorrowingRate.toFixed(0),
       'Invalid variable rate'
     );
 
@@ -82,20 +111,35 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
 
     availableLiquidity = availableLiquidity.add('200000000000000000'); // total liquidity = existing liquidity + added liquidity(200000000000000000) - taken liquidity(0)
 
+    // a = intercept
+    // m = slope
+    // q = probability of withdrawal shock
+    // η = reserve factor
+    // U⋆(θ; ρ) = utilizationRate
+    // borrowing rate
+    // E[ρ(θ)] = a + m · (1 + (η · q) / (1 - η)) · U⋆(θ; ρ)
+    // liquidity rate
+    // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
+    // here - 
+    // a = .1
+    // m = .08
+    // q = .3
+    // n = .5
+
     const utilizationRate = totalDebt.rayDiv(totalDebt.plus(availableLiquidity.toString()));
 
-    const expectedVariableRate = new BigNumber(50e23).plus((new BigNumber(493e23)).rayMul(utilizationRate));
+    const expectedVariableRate = (new BigNumber(.1)).times(RAY).plus((new BigNumber(1.3).multipliedBy(new BigNumber(.08))).times(RAY).rayMul(utilizationRate));
 
-    const expectedLiquidityRate = utilizationRate.rayMul((utilizationRate.rayMul(new BigNumber(488e23)).plus(new BigNumber(55e23))));
-
-    expect(currentLiquidityRate.toString()).to.be.equal(
-    expectedLiquidityRate.toFixed(0).toString(),
-      'Invalid liquidity rate'
-    );
+    const expectedLiquidityRate = utilizationRate.rayMul((new BigNumber(.7).times(RAY).rayMul(new BigNumber(.1).times(RAY).plus(new BigNumber(.08).times(RAY).rayMul(utilizationRate))).plus(new BigNumber(.15*.26).times(RAY))))
 
     expect(currentVariableBorrowRate.toString()).to.be.equal(
       expectedVariableRate.toFixed(0),
       'Invalid variable rate'
+    );
+
+    expect(currentLiquidityRate.toString()).to.be.equal(
+    expectedLiquidityRate.toFixed(0).toString(),
+      'Invalid liquidity rate'
     );
 
     expect(currentStableBorrowRate.toString()).to.be.equal(
@@ -124,11 +168,26 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
 
     const totalDebt = new BigNumber('800000000000000000');
 
+    // a = intercept
+    // m = slope
+    // q = probability of withdrawal shock
+    // η = reserve factor
+    // U⋆(θ; ρ) = utilizationRate
+    // borrowing rate
+    // E[ρ(θ)] = a + m · (1 + (η · q) / (1 - η)) · U⋆(θ; ρ)
+    // liquidity rate
+    // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
+    // here - 
+    // a = .1
+    // m = .08
+    // q = .3
+    // n = .5
+
     const utilizationRate = totalDebt.rayDiv(totalDebt.plus(availableLiquidity.toString()));
 
-    const expectedVariableRate = new BigNumber(50e23).plus((new BigNumber(493e23)).rayMul(utilizationRate));
+    const expectedVariableRate = (new BigNumber(.1)).times(RAY).plus((new BigNumber(1.3).multipliedBy(new BigNumber(.08))).times(RAY).rayMul(utilizationRate));
 
-    const expectedLiquidityRate = utilizationRate.rayMul((utilizationRate.rayMul(new BigNumber(488e23)).plus(new BigNumber(55e23))));
+    const expectedLiquidityRate = utilizationRate.rayMul((new BigNumber(.7).times(RAY).rayMul(new BigNumber(.1).times(RAY).plus(new BigNumber(.08).times(RAY).rayMul(utilizationRate))).plus(new BigNumber(.15*.26).times(RAY))))
 
     expect(currentLiquidityRate.toString()).to.be.equal(
       expectedLiquidityRate.toFixed(0),
@@ -172,9 +231,24 @@ makeSuite('Custom interest rate strategy tests', (testEnv: TestEnv) => {
 
     const utilizationRate = totalDebt.rayDiv(totalDebt.plus(availableLiquidity.toString()));
 
-    const expectedVariableRate = new BigNumber(50e23).plus((new BigNumber(493e23)).rayMul(utilizationRate));
+    // a = intercept
+    // m = slope
+    // q = probability of withdrawal shock
+    // η = reserve factor
+    // U⋆(θ; ρ) = utilizationRate
+    // borrowing rate
+    // E[ρ(θ)] = a + m · (1 + (η · q) / (1 - η)) · U⋆(θ; ρ)
+    // liquidity rate
+    // E[U(θ) · ρ(U(θ))] = U⋆(θ; ρ) · ((1 - q) · (a + m · U⋆(θ; ρ)) + q · (1 - η) · (a + m · (1 / (1 - η))))
+    // here - 
+    // a = .1
+    // m = .08
+    // q = .3
+    // n = .5
 
-    const expectedLiquidityRate = utilizationRate.rayMul((utilizationRate.rayMul(new BigNumber(488e23)).plus(new BigNumber(55e23))));
+    const expectedVariableRate = (new BigNumber(.1)).times(RAY).plus((new BigNumber(1.3).multipliedBy(new BigNumber(.08))).times(RAY).rayMul(utilizationRate));
+
+    const expectedLiquidityRate = utilizationRate.rayMul((new BigNumber(.7).times(RAY).rayMul(new BigNumber(.1).times(RAY).plus(new BigNumber(.08).times(RAY).rayMul(utilizationRate))).plus(new BigNumber(.15*.26).times(RAY))))
 
     expect(currentLiquidityRate.toString()).to.be.equal(
       expectedLiquidityRate.toFixed(0),
