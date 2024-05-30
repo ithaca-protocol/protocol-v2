@@ -237,9 +237,21 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
   ) internal view {
-    ClientParams params = IIthacaFeed(ithacaFeed).getClient(user);
+    bytes4 selector = bytes4(keccak256('getClient(address)'));
+    (bool success, bytes memory returnData) = ithacaFeed.staticcall(
+      abi.encodeWithSelector(selector, user)
+    );
 
-    int256 netPortfolioValue = params.collateral + params.mtm - params.maintenanceMargin;
+    require(success, 'Call failed');
+
+    IIthacaFeed.ClientParams memory params;
+
+    (params.client, params.maintenanceMargin, params.mtm, params.collateral) = abi.decode(
+      returnData,
+      (address, int256, int256, uint256)
+    );
+
+    int256 netPortfolioValue = int256(params.collateral) + params.mtm - params.maintenanceMargin;
 
     vars.healthFactor = uint256(netPortfolioValue).wadDiv(vars.totalDebtInETH);
   }

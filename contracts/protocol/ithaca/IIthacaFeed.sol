@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.20;
+pragma solidity 0.6.12;
 
 interface IIthacaFeed {
     event ClientUpdated(uint64 backendId);
@@ -12,8 +12,8 @@ interface IIthacaFeed {
     }
 
 
-    function getClient(
-        address client
-    ) external view returns (ClientParams memory)
+    // function getClient(
+    //     address client
+    // ) external view returns (ClientParams memory);
 
 }
