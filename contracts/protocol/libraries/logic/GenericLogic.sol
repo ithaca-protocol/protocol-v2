@@ -11,6 +11,7 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
 
 /**
  * @title GenericLogic library
@@ -49,7 +50,6 @@ library GenericLogic {
    * @param reservesData The data of all the reserves
    * @param userConfig The user configuration
    * @param reserves The list of all the active reserves
-   * @param oracle The address of the oracle contract
    * @return true if the decrease of the balance is allowed
    **/
   function balanceDecreaseAllowed(
@@ -60,7 +60,7 @@ library GenericLogic {
     DataTypes.UserConfigurationMap calldata userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
+    Feeds memory feeds
   ) external view returns (bool) {
     if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id)) {
       return true;
@@ -82,15 +82,16 @@ library GenericLogic {
       ,
       vars.avgLiquidationThreshold,
 
-    ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, oracle);
+    ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, feeds);
 
     if (vars.totalDebtInETH == 0) {
       return true;
     }
 
-    vars.amountToDecreaseInETH = IPriceOracleGetter(oracle).getAssetPrice(asset).mul(amount).div(
-      10**vars.decimals
-    );
+    vars.amountToDecreaseInETH = IPriceOracleGetter(feeds.oracle)
+      .getAssetPrice(asset)
+      .mul(amount)
+      .div(10 ** vars.decimals);
 
     vars.collateralBalanceAfterDecrease = vars.totalCollateralInETH.sub(vars.amountToDecreaseInETH);
 
@@ -105,12 +106,11 @@ library GenericLogic {
       .sub(vars.amountToDecreaseInETH.mul(vars.liquidationThreshold))
       .div(vars.collateralBalanceAfterDecrease);
 
-    uint256 healthFactorAfterDecrease =
-      calculateHealthFactorFromBalances(
-        vars.collateralBalanceAfterDecrease,
-        vars.totalDebtInETH,
-        vars.liquidationThresholdAfterDecrease
-      );
+    uint256 healthFactorAfterDecrease = calculateHealthFactorFromBalances(
+      vars.collateralBalanceAfterDecrease,
+      vars.totalDebtInETH,
+      vars.liquidationThresholdAfterDecrease
+    );
 
     return healthFactorAfterDecrease >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD;
   }
@@ -136,6 +136,11 @@ library GenericLogic {
     bool userUsesReserveAsCollateral;
   }
 
+  struct Feeds {
+    address oracle;
+    address ithacafeed;
+  }
+
   /**
    * @dev Calculates the user data across the reserves.
    * this includes the total liquidity/collateral/borrow balances in ETH,
@@ -144,7 +149,6 @@ library GenericLogic {
    * @param reservesData Data of all the reserves
    * @param userConfig The configuration of the user
    * @param reserves The list of the available reserves
-   * @param oracle The price oracle address
    * @return The total collateral and total debt of the user in ETH, the avg ltv, liquidation threshold and the HF
    **/
   function calculateUserAccountData(
@@ -153,18 +157,8 @@ library GenericLogic {
     DataTypes.UserConfigurationMap memory userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
-  )
-    internal
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256,
-      uint256
-    )
-  {
+    Feeds memory feeds
+  ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
     CalculateUserAccountDataVars memory vars;
 
     if (userConfig.isEmpty()) {
@@ -182,14 +176,18 @@ library GenericLogic {
         .configuration
         .getParams();
 
-      vars.tokenUnit = 10**vars.decimals;
-      vars.reserveUnitPrice = IPriceOracleGetter(oracle).getAssetPrice(vars.currentReserveAddress);
+      vars.tokenUnit = 10 ** vars.decimals;
+      vars.reserveUnitPrice = IPriceOracleGetter(feeds.oracle).getAssetPrice(
+        vars.currentReserveAddress
+      );
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
 
-        uint256 liquidityBalanceETH =
-          vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(vars.tokenUnit);
+        uint256 liquidityBalanceETH = vars
+          .reserveUnitPrice
+          .mul(vars.compoundedLiquidityBalance)
+          .div(vars.tokenUnit);
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
 
@@ -218,11 +216,13 @@ library GenericLogic {
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
 
-    vars.healthFactor = calculateHealthFactorFromBalances(
-      vars.totalCollateralInETH,
-      vars.totalDebtInETH,
-      vars.avgLiquidationThreshold
-    );
+    _getHealthFactor(user, vars, feeds.ithacafeed);
+
+    // vars.healthFactor = calculateHealthFactorFromBalances(
+    //   vars.totalCollateralInETH,
+    //   vars.totalDebtInETH,
+    //   vars.avgLiquidationThreshold
+    // );
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -230,6 +230,18 @@ library GenericLogic {
       vars.avgLiquidationThreshold,
       vars.healthFactor
     );
+  }
+
+  function _getHealthFactor(
+    address user,
+    CalculateUserAccountDataVars memory vars,
+    address ithacaFeed
+  ) internal view {
+    ClientParams params = IIthacaFeed(ithacaFeed).getClient(user);
+
+    int256 netPortfolioValue = params.collateral + params.mtm - params.maintenanceMargin;
+
+    vars.healthFactor = uint256(netPortfolioValue).wadDiv(vars.totalDebtInETH);
   }
 
   /**

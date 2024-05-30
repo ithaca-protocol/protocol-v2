@@ -55,7 +55,6 @@ library ValidationLogic {
    * @param userConfig The user configuration
    * @param reserves The addresses of the reserves
    * @param reservesCount The number of reserves
-   * @param oracle The price oracle
    */
   function validateWithdraw(
     address reserveAddress,
@@ -65,7 +64,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
+    GenericLogic.Feeds memory feeds
   ) external view {
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
     require(amount <= userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
@@ -82,7 +81,7 @@ library ValidationLogic {
         userConfig,
         reserves,
         reservesCount,
-        oracle
+        feeds
       ),
       Errors.VL_TRANSFER_NOT_ALLOWED
     );
@@ -114,22 +113,25 @@ library ValidationLogic {
    * @param reservesData The state of all the reserves
    * @param userConfig The state of the user for the specific reserve
    * @param reserves The addresses of all the active reserves
-   * @param oracle The price oracle
    */
+
+  struct BorrowParams{
+    address userAddress;
+    uint256 amount;
+    uint256 amountInETH;
+    uint256 interestRateMode;
+    uint256 maxStableLoanPercent;
+  }
 
   function validateBorrow(
     address asset,
     DataTypes.ReserveData storage reserve,
-    address userAddress,
-    uint256 amount,
-    uint256 amountInETH,
-    uint256 interestRateMode,
-    uint256 maxStableLoanPercent,
+    BorrowParams memory params,
     mapping(address => DataTypes.ReserveData) storage reservesData,
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
+    GenericLogic.Feeds memory feeds
   ) external view {
     ValidateBorrowLocalVars memory vars;
 
@@ -139,14 +141,14 @@ library ValidationLogic {
 
     require(vars.isActive, Errors.VL_NO_ACTIVE_RESERVE);
     require(!vars.isFrozen, Errors.VL_RESERVE_FROZEN);
-    require(amount != 0, Errors.VL_INVALID_AMOUNT);
+    require(params.amount != 0, Errors.VL_INVALID_AMOUNT);
 
     require(vars.borrowingEnabled, Errors.VL_BORROWING_NOT_ENABLED);
 
     //validate interest rate mode
     require(
-      uint256(DataTypes.InterestRateMode.VARIABLE) == interestRateMode ||
-        uint256(DataTypes.InterestRateMode.STABLE) == interestRateMode,
+      uint256(DataTypes.InterestRateMode.VARIABLE) == params.interestRateMode ||
+        uint256(DataTypes.InterestRateMode.STABLE) == params.interestRateMode,
       Errors.VL_INVALID_INTEREST_RATE_MODE_SELECTED
     );
 
@@ -157,12 +159,12 @@ library ValidationLogic {
       vars.currentLiquidationThreshold,
       vars.healthFactor
     ) = GenericLogic.calculateUserAccountData(
-      userAddress,
+      params.userAddress,
       reservesData,
       userConfig,
       reserves,
       reservesCount,
-      oracle
+      feeds
     );
 
     require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
@@ -173,7 +175,7 @@ library ValidationLogic {
     );
 
     //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
-    vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(amountInETH).percentDiv(
+    vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(params.amountInETH).percentDiv(
       vars.currentLtv
     ); //LTV is calculated in percentage
 
@@ -190,7 +192,7 @@ library ValidationLogic {
      * 3. Users will be able to borrow only a portion of the total available liquidity
      **/
 
-    if (interestRateMode == uint256(DataTypes.InterestRateMode.STABLE)) {
+    if (params.interestRateMode == uint256(DataTypes.InterestRateMode.STABLE)) {
       //check if the borrow mode is stable and if stable rate borrowing is enabled on this reserve
 
       require(vars.stableRateBorrowingEnabled, Errors.VL_STABLE_BORROWING_NOT_ENABLED);
@@ -198,7 +200,7 @@ library ValidationLogic {
       require(
         !userConfig.isUsingAsCollateral(reserve.id) ||
           reserve.configuration.getLtv() == 0 ||
-          amount > IERC20(reserve.aTokenAddress).balanceOf(userAddress),
+          params.amount > IERC20(reserve.aTokenAddress).balanceOf(params.userAddress),
         Errors.VL_COLLATERAL_SAME_AS_BORROWING_CURRENCY
       );
 
@@ -206,9 +208,9 @@ library ValidationLogic {
 
       //calculate the max available loan size in stable rate mode as a percentage of the
       //available liquidity
-      uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(maxStableLoanPercent);
+      uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(params.maxStableLoanPercent);
 
-      require(amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
+      require(params.amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
     }
   }
 
@@ -312,8 +314,10 @@ library ValidationLogic {
     require(isActive, Errors.VL_NO_ACTIVE_RESERVE);
 
     //if the usage ratio is below 95%, no rebalances are needed
-    uint256 totalDebt =
-      stableDebtToken.totalSupply().add(variableDebtToken.totalSupply()).wadToRay();
+    uint256 totalDebt = stableDebtToken
+      .totalSupply()
+      .add(variableDebtToken.totalSupply())
+      .wadToRay();
     uint256 availableLiquidity = IERC20(reserveAddress).balanceOf(aTokenAddress).wadToRay();
     uint256 usageRatio = totalDebt == 0 ? 0 : totalDebt.rayDiv(availableLiquidity.add(totalDebt));
 
@@ -321,8 +325,9 @@ library ValidationLogic {
     //then we allow rebalancing of the stable rate positions.
 
     uint256 currentLiquidityRate = reserve.currentLiquidityRate;
-    uint256 maxVariableBorrowRate =
-      IReserveInterestRateStrategy(reserve.interestRateStrategyAddress).getMaxVariableBorrowRate();
+    uint256 maxVariableBorrowRate = IReserveInterestRateStrategy(
+      reserve.interestRateStrategyAddress
+    ).getMaxVariableBorrowRate();
 
     require(
       usageRatio >= REBALANCE_UP_USAGE_RATIO_THRESHOLD &&
@@ -339,7 +344,6 @@ library ValidationLogic {
    * @param reservesData The data of all the reserves
    * @param userConfig The state of the user for the specific reserve
    * @param reserves The addresses of all the active reserves
-   * @param oracle The price oracle
    */
   function validateSetUseReserveAsCollateral(
     DataTypes.ReserveData storage reserve,
@@ -349,7 +353,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
+    GenericLogic.Feeds memory feeds
   ) external view {
     uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
 
@@ -365,7 +369,7 @@ library ValidationLogic {
           userConfig,
           reserves,
           reservesCount,
-          oracle
+          feeds
         ),
       Errors.VL_DEPOSIT_ALREADY_IN_USE
     );
@@ -413,9 +417,8 @@ library ValidationLogic {
       );
     }
 
-    bool isCollateralEnabled =
-      collateralReserve.configuration.getLiquidationThreshold() > 0 &&
-        userConfig.isUsingAsCollateral(collateralReserve.id);
+    bool isCollateralEnabled = collateralReserve.configuration.getLiquidationThreshold() > 0 &&
+      userConfig.isUsingAsCollateral(collateralReserve.id);
 
     //if collateral isn't enabled as collateral by user, it cannot be liquidated
     if (!isCollateralEnabled) {
@@ -441,7 +444,6 @@ library ValidationLogic {
    * @param reservesData The state of all the reserves
    * @param userConfig The state of the user for the specific reserve
    * @param reserves The addresses of all the active reserves
-   * @param oracle The price oracle
    */
   function validateTransfer(
     address from,
@@ -449,7 +451,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    address oracle
+    GenericLogic.Feeds memory feeds
   ) internal view {
     (, , , , uint256 healthFactor) =
       GenericLogic.calculateUserAccountData(
@@ -458,7 +460,7 @@ library ValidationLogic {
         userConfig,
         reserves,
         reservesCount,
-        oracle
+        feeds
       );
 
     require(
