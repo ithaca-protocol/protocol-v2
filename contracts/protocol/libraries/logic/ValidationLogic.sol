@@ -15,6 +15,7 @@ import {Errors} from '../helpers/Errors.sol';
 import {Helpers} from '../helpers/Helpers.sol';
 import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
 import {DataTypes} from '../types/DataTypes.sol';
+import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
 
 /**
  * @title ReserveLogic library
@@ -115,7 +116,7 @@ library ValidationLogic {
    * @param reserves The addresses of all the active reserves
    */
 
-  struct BorrowParams{
+  struct BorrowParams {
     address userAddress;
     uint256 amount;
     uint256 amountInETH;
@@ -177,10 +178,16 @@ library ValidationLogic {
     //add the current already borrowed amount to the amount requested to calculate the total collateral needed.
     vars.amountOfCollateralNeededETH = vars.userBorrowBalanceETH.add(params.amountInETH).percentDiv(
       vars.currentLtv
-    ); //LTV is calculated in percentage
+    );
+
+    (int256 margin, int256 mtm, ) = _getClientParams(params.userAddress, feeds.ithacafeed);
+
+    int256 netCollateralRequiredETH = int256(vars.userBorrowBalanceETH) + mtm - margin;
+
+    require(netCollateralRequiredETH > 0, 'insufficient collateral');
 
     require(
-      vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
+      vars.amountOfCollateralNeededETH <= uint256(netCollateralRequiredETH),
       Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
     );
 
@@ -210,8 +217,31 @@ library ValidationLogic {
       //available liquidity
       uint256 maxLoanSizeStable = vars.availableLiquidity.percentMul(params.maxStableLoanPercent);
 
-      require(params.amount <= maxLoanSizeStable, Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE);
+      require(
+        params.amount <= maxLoanSizeStable,
+        Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE
+      );
     }
+  }
+
+  function _getClientParams(
+    address user,
+    address feed
+  ) internal view returns (int256, int256, uint256) {
+    bytes4 selector = bytes4(keccak256('getClient(address)'));
+
+    (bool success, bytes memory returnData) = feed.staticcall(
+      abi.encodeWithSelector(selector, user)
+    );
+
+    require(success, 'call failed!');
+
+    IIthacaFeed.ClientParams memory params;
+
+    (params.client, params.maintenanceMargin, params.mtm, params.collateral, params.vaR) = abi
+      .decode(returnData, (address, int256, int256, uint256, uint256));
+
+    return (params.maintenanceMargin, params.mtm, params.vaR);
   }
 
   /**
@@ -453,15 +483,14 @@ library ValidationLogic {
     uint256 reservesCount,
     GenericLogic.Feeds memory feeds
   ) internal view {
-    (, , , , uint256 healthFactor) =
-      GenericLogic.calculateUserAccountData(
-        from,
-        reservesData,
-        userConfig,
-        reserves,
-        reservesCount,
-        feeds
-      );
+    (, , , , uint256 healthFactor) = GenericLogic.calculateUserAccountData(
+      from,
+      reservesData,
+      userConfig,
+      reserves,
+      reservesCount,
+      feeds
+    );
 
     require(
       healthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD,

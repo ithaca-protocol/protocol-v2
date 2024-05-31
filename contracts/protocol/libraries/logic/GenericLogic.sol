@@ -242,7 +242,7 @@ library GenericLogic {
       abi.encodeWithSelector(selector, user)
     );
 
-    require(success, 'Call failed');
+    require(success, 'call failed!');
 
     IIthacaFeed.ClientParams memory params;
 
