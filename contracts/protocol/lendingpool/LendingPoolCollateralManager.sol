@@ -18,6 +18,7 @@ import {Errors} from "../libraries/helpers/Errors.sol";
 import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";
+import {IIthacaFeed} from "../ithaca/IIthacaFeed.sol";
 
 /**
  * @title LendingPoolCollateralManager contract
@@ -65,6 +66,14 @@ contract LendingPoolCollateralManager is
    */
   function getRevision() internal pure override returns (uint256) {
     return 0;
+  }
+
+  function _getTotalCollateral(address user) internal view returns (uint256) {
+    address ithacaFeed = _addressesProvider.getIthacaFeedOracle();
+    (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
+      .getClientData(user);
+
+    return (uint256(int256(collateral) + mtm - maintenanceMargin));
   }
 
   /**
@@ -120,7 +129,7 @@ contract LendingPoolCollateralManager is
 
     vars.collateralAtoken = IAToken(collateralReserve.aTokenAddress);
 
-    vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
+    vars.userCollateralBalance = _getTotalCollateral(user);
 
     vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
       LIQUIDATION_CLOSE_FACTOR_PERCENT
