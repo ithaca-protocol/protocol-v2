@@ -27,7 +27,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = 'COLLATERAL_MANAGER';
   bytes32 private constant PRICE_ORACLE = 'PRICE_ORACLE';
   bytes32 private constant LENDING_RATE_ORACLE = 'LENDING_RATE_ORACLE';
-  bytes32 private constant ITHACA_FEED_ORACLE = 'ORACLE_RATE_ORACLE';
+  bytes32 private constant ITHACA_FEED_ORACLE = 'ITHACA_FEED_ORACLE';
 
   constructor(string memory marketId) public {
     _setMarketId(marketId);

@@ -12,7 +12,8 @@ interface IIthacaFeed {
     uint256 vaR;
   }
 
-  // function getClient(
-  //     address client
-  // ) external view returns (ClientParams memory);
+  function getClientData(
+        address client
+    ) external view returns (address, int256, int256, uint256, uint256) ;
+
 }

@@ -2,16 +2,16 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {ReserveLogic} from './ReserveLogic.sol';
-import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
-import {PercentageMath} from '../math/PercentageMath.sol';
-import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
-import {DataTypes} from '../types/DataTypes.sol';
-import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
+import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {ReserveLogic} from "./ReserveLogic.sol";
+import {ReserveConfiguration} from "../configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "../configuration/UserConfiguration.sol";
+import {WadRayMath} from "../math/WadRayMath.sol";
+import {PercentageMath} from "../math/PercentageMath.sol";
+import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
+import {DataTypes} from "../types/DataTypes.sol";
+import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
 
 /**
  * @title GenericLogic library
@@ -209,18 +209,17 @@ library GenericLogic {
       }
     }
 
+    (vars.healthFactor, vars.totalCollateralInETH) = _getHealthFactorAndTotalCollateral(
+      user,
+      vars,
+      feeds.ithacafeed
+    );
+
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
 
-    _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
-
-    // vars.healthFactor = calculateHealthFactorFromBalances(
-    //   vars.totalCollateralInETH,
-    //   vars.totalDebtInETH,
-    //   vars.avgLiquidationThreshold
-    // );
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -234,25 +233,14 @@ library GenericLogic {
     address user,
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
-  ) internal view {
-    bytes4 selector = bytes4(keccak256('getClient(address)'));
-    (bool success, bytes memory returnData) = ithacaFeed.staticcall(
-      abi.encodeWithSelector(selector, user)
-    );
+  ) internal view returns (uint256, uint256) {
+    (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
+      .getClientData(user);
 
-    require(success, 'call failed!');
+    uint256 totalCollateralInETH = uint256(int256(collateral) + mtm - maintenanceMargin);
+    uint256 healthFactor = vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH);
 
-    IIthacaFeed.ClientParams memory params;
-
-    (params.client, params.maintenanceMargin, params.mtm, params.collateral) = abi.decode(
-      returnData,
-      (address, int256, int256, uint256)
-    );
-
-    int256 netPortfolioValue = int256(params.collateral) + params.mtm - params.maintenanceMargin;
-
-    vars.healthFactor = uint256(netPortfolioValue).wadDiv(vars.totalDebtInETH);
-    vars.totalCollateralInETH = params.collateral;
+    return (healthFactor, totalCollateralInETH);
   }
 
   /**

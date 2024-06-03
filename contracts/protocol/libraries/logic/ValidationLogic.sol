@@ -2,20 +2,20 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {ReserveLogic} from './ReserveLogic.sol';
-import {GenericLogic} from './GenericLogic.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
-import {PercentageMath} from '../math/PercentageMath.sol';
-import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {Errors} from '../helpers/Errors.sol';
-import {Helpers} from '../helpers/Helpers.sol';
-import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
-import {DataTypes} from '../types/DataTypes.sol';
-import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
+import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {ReserveLogic} from "./ReserveLogic.sol";
+import {GenericLogic} from "./GenericLogic.sol";
+import {WadRayMath} from "../math/WadRayMath.sol";
+import {PercentageMath} from "../math/PercentageMath.sol";
+import {SafeERC20} from "../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {ReserveConfiguration} from "../configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "../configuration/UserConfiguration.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Helpers} from "../helpers/Helpers.sol";
+import {IReserveInterestRateStrategy} from "../../../interfaces/IReserveInterestRateStrategy.sol";
+import {DataTypes} from "../types/DataTypes.sol";
+import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
 
 /**
  * @title ReserveLogic library
@@ -184,7 +184,7 @@ library ValidationLogic {
 
     int256 netCollateralRequiredETH = int256(vars.userBorrowBalanceETH) + mtm - margin;
 
-    require(netCollateralRequiredETH > 0, 'insufficient collateral');
+    require(netCollateralRequiredETH > 0, "insufficient collateral");
 
     require(
       vars.amountOfCollateralNeededETH <= uint256(netCollateralRequiredETH),
@@ -228,20 +228,9 @@ library ValidationLogic {
     address user,
     address feed
   ) internal view returns (int256, int256, uint256) {
-    bytes4 selector = bytes4(keccak256('getClient(address)'));
+    (, int256 maintenanceMargin, int256 mtm, , uint256 vaR) = IIthacaFeed(feed).getClientData(user);
 
-    (bool success, bytes memory returnData) = feed.staticcall(
-      abi.encodeWithSelector(selector, user)
-    );
-
-    require(success, 'call failed!');
-
-    IIthacaFeed.ClientParams memory params;
-
-    (params.client, params.maintenanceMargin, params.mtm, params.collateral, params.vaR) = abi
-      .decode(returnData, (address, int256, int256, uint256, uint256));
-
-    return (params.maintenanceMargin, params.mtm, params.vaR);
+    return (maintenanceMargin, mtm, vaR);
   }
 
   /**
