@@ -68,7 +68,7 @@ contract LendingPoolCollateralManager is
     return 0;
   }
 
-  function _getTotalCollateral(address user) internal view returns (uint256) {
+  function _getIthacaCollateral(address user) internal view returns (uint256) {
     address ithacaFeed = _addressesProvider.getIthacaFeedOracle();
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
@@ -129,7 +129,9 @@ contract LendingPoolCollateralManager is
 
     vars.collateralAtoken = IAToken(collateralReserve.aTokenAddress);
 
-    vars.userCollateralBalance = _getTotalCollateral(user);
+    vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
+
+    vars.userCollateralBalance += _getIthacaCollateral(user);
 
     vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
       LIQUIDATION_CLOSE_FACTOR_PERCENT

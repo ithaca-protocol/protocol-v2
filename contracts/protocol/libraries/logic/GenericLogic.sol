@@ -189,6 +189,8 @@ library GenericLogic {
           .mul(vars.compoundedLiquidityBalance)
           .div(vars.tokenUnit);
 
+        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
           liquidityBalanceETH.mul(vars.liquidationThreshold)
@@ -209,11 +211,8 @@ library GenericLogic {
       }
     }
 
-    (vars.healthFactor, vars.totalCollateralInETH) = _getHealthFactorAndTotalCollateral(
-      user,
-      vars,
-      feeds.ithacafeed
-    );
+    (vars.healthFactor, uint256 ithacaCollateral) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
+    vars.totalCollateralInETH += ithacaCollateral;
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
