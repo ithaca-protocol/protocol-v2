@@ -211,7 +211,7 @@ library GenericLogic {
       }
     }
 
-    (vars.healthFactor, uint256 ithacaCollateral) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed, var.totalCollateralInETH);
+    (vars.healthFactor, uint256 ithacaCollateral) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
     vars.totalCollateralInETH += ithacaCollateral;
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
