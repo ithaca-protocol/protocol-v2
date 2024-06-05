@@ -231,13 +231,12 @@ library GenericLogic {
   function _getHealthFactorAndTotalCollateral(
     address user,
     CalculateUserAccountDataVars memory vars,
-    address ithacaFeed,
-    uint256 poolCollateral
+    address ithacaFeed
   ) internal view returns (uint256, uint256) {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    uint256 totalCollateralInETH = uint256(int256(collateral) + mtm - maintenanceMargin + poolCollateral);
+    uint256 totalCollateralInETH = uint256(int256(collateral) + mtm - maintenanceMargin + var.totalCollateralInETH);
     uint256 healthFactor = vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH);
 
     return (healthFactor, totalCollateralInETH);
