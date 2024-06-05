@@ -210,8 +210,12 @@ library GenericLogic {
         );
       }
     }
-
-    (vars.healthFactor, uint256 ithacaCollateral) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
+    uint256 ithacaCollateral;
+    (vars.healthFactor, ithacaCollateral) = _getHealthFactorAndTotalCollateral(
+      user,
+      vars,
+      feeds.ithacafeed
+    );
     vars.totalCollateralInETH += ithacaCollateral;
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
@@ -236,7 +240,9 @@ library GenericLogic {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    uint256 totalCollateralInETH = uint256(int256(collateral) + mtm - maintenanceMargin + var.totalCollateralInETH);
+    uint256 totalCollateralInETH = uint256(
+      int256(collateral) + mtm - maintenanceMargin + int256(vars.totalCollateralInETH)
+    );
     uint256 healthFactor = vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH);
 
     return (healthFactor, totalCollateralInETH);
