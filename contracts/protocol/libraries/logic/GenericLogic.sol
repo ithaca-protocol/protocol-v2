@@ -216,6 +216,8 @@ library GenericLogic {
       vars,
       feeds.ithacafeed
     );
+
+    vars.avgLtv += ithacaCollateral;
     vars.totalCollateralInETH += ithacaCollateral;
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
@@ -236,16 +238,16 @@ library GenericLogic {
     address user,
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
-  ) internal view returns (uint256, uint256) {
+  ) internal view returns (uint256 healthFactor, uint256 totalCollateralInETH) {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    uint256 totalCollateralInETH = uint256(
+    totalCollateralInETH = uint256(
       int256(collateral) + mtm - maintenanceMargin + int256(vars.totalCollateralInETH)
     );
-    uint256 healthFactor = vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH);
-
-    return (healthFactor, totalCollateralInETH);
+    healthFactor = (vars.totalDebtInETH != 0)
+      ? totalCollateralInETH.wadDiv(vars.totalDebtInETH)
+      : uint256(-1);
   }
 
   /**
