@@ -3,6 +3,7 @@ pragma solidity 0.6.12;
 
 import {Errors} from "../helpers/Errors.sol";
 import {DataTypes} from "../types/DataTypes.sol";
+import "hardhat/console.sol";
 
 /**
  * @title UserConfiguration library
@@ -54,6 +55,7 @@ library UserConfiguration {
     self.data = (usingAsCollateral)
       ? (self.data | (1 << uint256(88)))
       : (self.data | ~(1 << uint256(88)));
+    console.log("set", self.data);
   }
 
   function isUsingIthacaCollateral(
@@ -118,7 +120,8 @@ library UserConfiguration {
    * @param self The configuration object
    * @return True if the user has been borrowing any reserve, false otherwise
    **/
-  function isEmpty(DataTypes.UserConfigurationMap memory self) internal pure returns (bool) {
+  function isEmpty(DataTypes.UserConfigurationMap memory self) internal view returns (bool) {
+    console.log(self.data);
     return self.data == 0;
   }
 }

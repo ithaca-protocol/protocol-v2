@@ -12,6 +12,7 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
 import {DataTypes} from "../types/DataTypes.sol";
 import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
+import "hardhat/console.sol";
 
 /**
  * @title GenericLogic library
@@ -190,6 +191,14 @@ library GenericLogic {
           .div(vars.tokenUnit);
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+        if (liquidityBalanceETH > 0) {
+          console.log("LTV");
+          console.log(vars.ltv);
+          console.log(vars.compoundedLiquidityBalance);
+          console.log(vars.reserveUnitPrice);
+          console.log(liquidityBalanceETH);
+          console.log("---");
+        }
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
@@ -210,17 +219,17 @@ library GenericLogic {
         );
       }
     }
-    uint256 ithacaCollateral;
-    (vars.healthFactor, ithacaCollateral) = _getHealthFactorAndTotalCollateral(
+
+    uint256 ithacaLtv;
+    (vars.healthFactor, vars.totalCollateralInETH, ithacaLtv) = _getHealthFactorAndTotalCollateral(
       user,
       vars,
       feeds.ithacafeed
     );
 
-    vars.avgLtv += ithacaCollateral;
-    vars.totalCollateralInETH += ithacaCollateral;
-
+    vars.avgLtv += ithacaLtv;
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
@@ -238,16 +247,19 @@ library GenericLogic {
     address user,
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
-  ) internal view returns (uint256 healthFactor, uint256 totalCollateralInETH) {
+  ) internal view returns (uint256 healthFactor, uint256 totalCollateralInETH, uint256 ithacaLtv) {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    totalCollateralInETH = uint256(
-      int256(collateral) + mtm - maintenanceMargin + int256(vars.totalCollateralInETH)
-    );
+    int256 ithacaCollateral = int256(collateral) + mtm - maintenanceMargin;
+
+    totalCollateralInETH = uint256(ithacaCollateral + int256(vars.totalCollateralInETH));
+
     healthFactor = (vars.totalDebtInETH != 0)
       ? totalCollateralInETH.wadDiv(vars.totalDebtInETH)
       : uint256(-1);
+
+    ithacaLtv = uint256(ithacaCollateral) * 10000;
   }
 
   /**
@@ -280,7 +292,7 @@ library GenericLogic {
     uint256 totalCollateralInETH,
     uint256 totalDebtInETH,
     uint256 ltv
-  ) internal pure returns (uint256) {
+  ) internal view returns (uint256) {
     uint256 availableBorrowsETH = totalCollateralInETH.percentMul(ltv);
 
     if (availableBorrowsETH < totalDebtInETH) {
