@@ -33,6 +33,7 @@ import {
   WETH9MockedFactory,
   WETHGatewayFactory,
   FlashLiquidationAdapterFactory,
+  IthacaFeedFactory,
 } from '../types';
 import { IERC20DetailedFactory } from '../types/IERC20DetailedFactory';
 import { getEthersSigners, MockTokenMap } from './contracts-helpers';
@@ -288,6 +289,12 @@ export const getWETHGateway = async (address?: tEthereumAddress) =>
       (
         await getDb().get(`${eContractid.WETHGateway}.${DRE.network.name}`).value()
       ).address,
+    await getFirstSigner()
+  );
+
+export const getIthacaFeed = async (address?: tEthereumAddress) =>
+  await IthacaFeedFactory.connect(
+    address || (await getDb().get(`${eContractid.IthacaFeed}.${DRE.network.name}`).value()).address,
     await getFirstSigner()
   );
 

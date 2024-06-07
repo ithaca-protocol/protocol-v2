@@ -180,14 +180,8 @@ library ValidationLogic {
       vars.currentLtv
     );
 
-    (int256 margin, int256 mtm, ) = _getClientParams(params.userAddress, feeds.ithacafeed);
-
-    int256 netCollateralRequiredETH = int256(vars.userBorrowBalanceETH) + mtm - margin;
-
-    require(netCollateralRequiredETH > 0, "insufficient collateral");
-
     require(
-      vars.amountOfCollateralNeededETH <= uint256(netCollateralRequiredETH),
+      vars.amountOfCollateralNeededETH <= vars.userCollateralBalanceETH,
       Errors.VL_COLLATERAL_CANNOT_COVER_NEW_BORROW
     );
 
@@ -222,15 +216,6 @@ library ValidationLogic {
         Errors.VL_AMOUNT_BIGGER_THAN_MAX_LOAN_SIZE_STABLE
       );
     }
-  }
-
-  function _getClientParams(
-    address user,
-    address feed
-  ) internal view returns (int256, int256, uint256) {
-    (, int256 maintenanceMargin, int256 mtm, , uint256 vaR) = IIthacaFeed(feed).getClientData(user);
-
-    return (maintenanceMargin, mtm, vaR);
   }
 
   /**

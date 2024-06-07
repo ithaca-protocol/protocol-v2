@@ -213,16 +213,16 @@ library GenericLogic {
     }
 
     uint256 ithacaLtv;
-    (vars.healthFactor, vars.totalCollateralInETH, ithacaLtv) = _getHealthFactorAndTotalCollateral(
-      user,
-      vars,
-      feeds.ithacafeed
-    );
+    uint256 ltvCollateral;
+    (
+      vars.healthFactor,
+      vars.totalCollateralInETH,
+      ithacaLtv,
+      ltvCollateral
+    ) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
 
     vars.avgLtv += ithacaLtv;
-    console.log("ITH");
-    console.log(vars.avgLtv);
-    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(ltvCollateral) : 0;
 
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
@@ -241,24 +241,35 @@ library GenericLogic {
     address user,
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
-  ) internal view returns (uint256 healthFactor, uint256 totalCollateralInETH, uint256 ithacaLtv) {
+  )
+    internal
+    view
+    returns (
+      uint256 healthFactor,
+      uint256 totalCollateralInETH,
+      uint256 ithacaLtv,
+      uint256 ltvCollateral
+    )
+  {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
     int256 ithacaCollateral = int256(collateral) + mtm - maintenanceMargin;
 
-    totalCollateralInETH = uint256(ithacaCollateral + int256(vars.totalCollateralInETH));
-    console.log("here");
-    console.log(uint256(ithacaCollateral));
-    console.log(uint256(totalCollateralInETH));
+    // collateralInETH is ithacaCollateral + aave collateral
+    int256 collateralInETH = ithacaCollateral + int256(vars.totalCollateralInETH);
+
+    // totalCollateralInETH is 0 if collateralInETH is negative
+    totalCollateralInETH = (collateralInETH > 0) ? uint256(collateralInETH) : 0;
 
     healthFactor = (vars.totalDebtInETH != 0)
       ? totalCollateralInETH.wadDiv(vars.totalDebtInETH)
       : uint256(-1);
 
-    console.log("fasdjas~");
-
+    // ltv is zero if ithaca collateral is negative
     ithacaLtv = ithacaCollateral > 0 ? uint256(ithacaCollateral) * 10000 : 0;
+
+    ltvCollateral = (ithacaCollateral > 0) ? totalCollateralInETH : vars.totalCollateralInETH;
   }
 
   /**
@@ -297,10 +308,6 @@ library GenericLogic {
     if (availableBorrowsETH < totalDebtInETH) {
       return 0;
     }
-    console.log("debt");
-    console.log(availableBorrowsETH);
-    console.log(totalDebtInETH);
-
     availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
     return availableBorrowsETH;
   }
