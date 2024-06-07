@@ -191,14 +191,6 @@ library GenericLogic {
           .div(vars.tokenUnit);
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
-        if (liquidityBalanceETH > 0) {
-          console.log("LTV");
-          console.log(vars.ltv);
-          console.log(vars.compoundedLiquidityBalance);
-          console.log(vars.reserveUnitPrice);
-          console.log(liquidityBalanceETH);
-          console.log("---");
-        }
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
@@ -228,6 +220,8 @@ library GenericLogic {
     );
 
     vars.avgLtv += ithacaLtv;
+    console.log("ITH");
+    console.log(vars.avgLtv);
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
 
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
@@ -254,12 +248,17 @@ library GenericLogic {
     int256 ithacaCollateral = int256(collateral) + mtm - maintenanceMargin;
 
     totalCollateralInETH = uint256(ithacaCollateral + int256(vars.totalCollateralInETH));
+    console.log("here");
+    console.log(uint256(ithacaCollateral));
+    console.log(uint256(totalCollateralInETH));
 
     healthFactor = (vars.totalDebtInETH != 0)
       ? totalCollateralInETH.wadDiv(vars.totalDebtInETH)
       : uint256(-1);
 
-    ithacaLtv = uint256(ithacaCollateral) * 10000;
+    console.log("fasdjas~");
+
+    ithacaLtv = ithacaCollateral > 0 ? uint256(ithacaCollateral) * 10000 : 0;
   }
 
   /**
@@ -298,6 +297,9 @@ library GenericLogic {
     if (availableBorrowsETH < totalDebtInETH) {
       return 0;
     }
+    console.log("debt");
+    console.log(availableBorrowsETH);
+    console.log(totalDebtInETH);
 
     availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
     return availableBorrowsETH;
