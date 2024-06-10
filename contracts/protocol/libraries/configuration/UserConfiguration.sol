@@ -3,7 +3,6 @@ pragma solidity 0.6.12;
 
 import {Errors} from "../helpers/Errors.sol";
 import {DataTypes} from "../types/DataTypes.sol";
-import "hardhat/console.sol";
 
 /**
  * @title UserConfiguration library
@@ -25,6 +24,9 @@ library UserConfiguration {
     uint256 reserveIndex,
     bool borrowing
   ) internal {
+    if (reserveIndex == 0) {
+      return;
+    }
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     self.data =
       (self.data & ~(1 << (reserveIndex * 2))) |
@@ -48,22 +50,6 @@ library UserConfiguration {
       (uint256(usingAsCollateral ? 1 : 0) << (reserveIndex * 2 + 1));
   }
 
-  function setUsingIthacaCollateral(
-    DataTypes.UserConfigurationMap storage self,
-    bool usingAsCollateral
-  ) internal {
-    self.data = (usingAsCollateral)
-      ? (self.data | (1 << uint256(88)))
-      : (self.data | ~(1 << uint256(88)));
-    console.log("set", self.data);
-  }
-
-  function isUsingIthacaCollateral(
-    DataTypes.UserConfigurationMap storage self
-  ) internal view returns (bool) {
-    return (self.data & (1 << uint256(88)) != 0);
-  }
-
   /**
    * @dev Used to validate if a user has been using the reserve for borrowing or as collateral
    * @param self The configuration object
@@ -73,7 +59,7 @@ library UserConfiguration {
   function isUsingAsCollateralOrBorrowing(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2)) & 3 != 0;
   }
@@ -87,7 +73,11 @@ library UserConfiguration {
   function isBorrowing(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
+    if (reserveIndex == 0) {
+      return false;
+    }
+
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2)) & 1 != 0;
   }
@@ -101,7 +91,7 @@ library UserConfiguration {
   function isUsingAsCollateral(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2 + 1)) & 1 != 0;
   }
@@ -121,7 +111,6 @@ library UserConfiguration {
    * @return True if the user has been borrowing any reserve, false otherwise
    **/
   function isEmpty(DataTypes.UserConfigurationMap memory self) internal view returns (bool) {
-    console.log(self.data);
     return self.data == 0;
   }
 }

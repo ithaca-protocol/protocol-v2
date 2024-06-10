@@ -154,6 +154,7 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await setInitialAssetPricesInOracle(
     ALL_ASSETS_INITIAL_PRICES,
     {
+      ITH: '0x',
       WETH: mockTokens.WETH.address,
       DAI: mockTokens.DAI.address,
       TUSD: mockTokens.TUSD.address,

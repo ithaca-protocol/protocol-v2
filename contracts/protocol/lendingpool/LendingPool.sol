@@ -25,7 +25,6 @@ import {ReserveConfiguration} from "../libraries/configuration/ReserveConfigurat
 import {UserConfiguration} from "../libraries/configuration/UserConfiguration.sol";
 import {DataTypes} from "../libraries/types/DataTypes.sol";
 import {LendingPoolStorage} from "./LendingPoolStorage.sol";
-import "hardhat/console.sol";
 
 /**
  * @title LendingPool contract
@@ -824,11 +823,11 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   function setUsingIthacaCollateral(bool isUsingAsCollateral) public {
-    _usersConfig[msg.sender].setUsingIthacaCollateral(isUsingAsCollateral);
+    _usersConfig[msg.sender].setUsingAsCollateral(0, isUsingAsCollateral);
   }
 
   function isUsingIthacaCollateral() public view returns (bool) {
-    return _usersConfig[msg.sender].isUsingIthacaCollateral();
+    return _usersConfig[msg.sender].isUsingAsCollateral(0);
   }
 
   /**

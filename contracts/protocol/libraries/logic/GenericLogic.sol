@@ -12,7 +12,6 @@ import {PercentageMath} from "../math/PercentageMath.sol";
 import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
 import {DataTypes} from "../types/DataTypes.sol";
 import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
-import "hardhat/console.sol";
 
 /**
  * @title GenericLogic library
@@ -165,7 +164,8 @@ library GenericLogic {
     if (userConfig.isEmpty()) {
       return (0, 0, 0, 0, uint256(-1));
     }
-    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
+
+    for (vars.i = reservesCount - 1; vars.i < reservesCount; vars.i--) {
       if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
         continue;
       }
@@ -185,20 +185,26 @@ library GenericLogic {
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
 
-        uint256 liquidityBalanceETH = vars
-          .reserveUnitPrice
-          .mul(vars.compoundedLiquidityBalance)
-          .div(vars.tokenUnit);
+        uint256 liquidityBalanceETH;
 
-        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+        if (vars.i == 0) {
+          liquidityBalanceETH = _getIthacaCollateral(user, vars, feeds.ithacafeed);
+        } else {
+          liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(
+            vars.tokenUnit
+          );
+        }
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
+
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
           liquidityBalanceETH.mul(vars.liquidationThreshold)
         );
+
+        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
       }
 
-      if (userConfig.isBorrowing(vars.i)) {
+      if (userConfig.isBorrowing(vars.i) && vars.i != 0) {
         vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
           user
         );
@@ -212,21 +218,13 @@ library GenericLogic {
       }
     }
 
-    uint256 ithacaLtv;
-    uint256 ltvCollateral;
-    (
-      vars.healthFactor,
-      vars.totalCollateralInETH,
-      ithacaLtv,
-      ltvCollateral
-    ) = _getHealthFactorAndTotalCollateral(user, vars, feeds.ithacafeed);
-
-    vars.avgLtv += ithacaLtv;
-    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(ltvCollateral) : 0;
+    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
 
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
+
+    vars.healthFactor = _getHealthFactor(vars);
 
     return (
       vars.totalCollateralInETH,
@@ -237,39 +235,24 @@ library GenericLogic {
     );
   }
 
-  function _getHealthFactorAndTotalCollateral(
+  function _getIthacaCollateral(
     address user,
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
-  )
-    internal
-    view
-    returns (
-      uint256 healthFactor,
-      uint256 totalCollateralInETH,
-      uint256 ithacaLtv,
-      uint256 ltvCollateral
-    )
-  {
+  ) internal view returns (uint256) {
     (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    int256 ithacaCollateral = int256(collateral) + mtm - maintenanceMargin;
+    int netCollateral = (int256(collateral) + mtm - maintenanceMargin);
+    return netCollateral > 0 ? uint256(netCollateral) : 0;
+  }
 
-    // collateralInETH is ithacaCollateral + aave collateral
-    int256 collateralInETH = ithacaCollateral + int256(vars.totalCollateralInETH);
-
-    // totalCollateralInETH is 0 if collateralInETH is negative
-    totalCollateralInETH = (collateralInETH > 0) ? uint256(collateralInETH) : 0;
-
+  function _getHealthFactor(
+    CalculateUserAccountDataVars memory vars
+  ) internal view returns (uint256 healthFactor) {
     healthFactor = (vars.totalDebtInETH != 0)
-      ? totalCollateralInETH.wadDiv(vars.totalDebtInETH)
+      ? vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH)
       : uint256(-1);
-
-    // ltv is zero if ithaca collateral is negative
-    ithacaLtv = ithacaCollateral > 0 ? uint256(ithacaCollateral) * 10000 : 0;
-
-    ltvCollateral = (ithacaCollateral > 0) ? totalCollateralInETH : vars.totalCollateralInETH;
   }
 
   /**
