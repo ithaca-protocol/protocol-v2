@@ -460,7 +460,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
-  it.only('Deposits WETH and USDC, borrows USDC', async () => {
+  it('Deposits WETH and USDC, borrows USDC', async () => {
     const depositor = users[5];
     const borrower = users[6];
 
