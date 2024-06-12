@@ -53,7 +53,6 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
 
     let isUsingIthacaAsCollateral = await pool.isUsingIthacaCollateral();
     expect(isUsingIthacaAsCollateral).to.be.equal(false);
-    console.log(userGlobalData);
 
     await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
 

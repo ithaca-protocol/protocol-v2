@@ -196,8 +196,6 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     const depositor = users[0];
     const borrower = users[3];
 
-    console.log('borrower', borrower.address);
-
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
     //mints WETH to borrower
@@ -282,7 +280,6 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
     await resetIthacaFeed(borrower.address);
   });
-
 
   it('Deposits WETH and USDC, borrows USDC', async () => {
     const depositor = users[0];
