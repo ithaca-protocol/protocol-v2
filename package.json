@@ -65,6 +65,8 @@
     "amm:fork:main:tenderly": "npm run compile && npm run hardhat:tenderly-main -- amm:mainnet",
     "aave:main:full:migration": "npm run compile && npm run hardhat:main -- aave:mainnet --verify",
     "aave:main:full:initialize": "npm run compile && FORK=main full:initialize-tokens --pool Aave",
+    "arb:sepolia:full:initialize": "hardhat --network arb full:initialize-lending-pool --verify --pool Aave",
+    "arb:sepolia:full:deploy": "hardhat --network arb full:deploy",
     "amm:main:full:migration": "npm run compile && npm run hardhat:main -- amm:mainnet --verify",
     "prettier:check": "npx prettier -c 'tasks/**/*.ts' 'contracts/**/*.sol' 'helpers/**/*.ts'  'test-suites/test-aave/**/*.ts'",
     "prettier:write": "prettier --write 'tasks/**/*.ts' 'contracts/**/*.sol' 'helpers/**/*.ts'  'test-suites/test-aave/**/*.ts'",
@@ -174,6 +176,7 @@
   "license": "AGPLv3",
   "dependencies": {
     "axios-curlirize": "^1.3.7",
+    "defender-base-client": "^1.44.1",
     "tmp-promise": "^3.0.2"
   },
   "keywords": [

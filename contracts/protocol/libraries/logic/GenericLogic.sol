@@ -224,7 +224,11 @@ library GenericLogic {
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
 
-    vars.healthFactor = _getHealthFactor(vars);
+    vars.healthFactor = calculateHealthFactorFromBalances(
+      vars.totalCollateralInETH,
+      vars.totalDebtInETH,
+      vars.avgLiquidationThreshold
+    );
 
     return (
       vars.totalCollateralInETH,
@@ -245,14 +249,6 @@ library GenericLogic {
 
     int netCollateral = (int256(collateral) + mtm - maintenanceMargin);
     return netCollateral > 0 ? uint256(netCollateral) : 0;
-  }
-
-  function _getHealthFactor(
-    CalculateUserAccountDataVars memory vars
-  ) internal view returns (uint256 healthFactor) {
-    healthFactor = (vars.totalDebtInETH != 0)
-      ? vars.totalCollateralInETH.wadDiv(vars.totalDebtInETH)
-      : uint256(-1);
   }
 
   /**
