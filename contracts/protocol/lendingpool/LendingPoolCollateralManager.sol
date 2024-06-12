@@ -131,7 +131,10 @@ contract LendingPoolCollateralManager is
 
     vars.userCollateralBalance = vars.collateralAtoken.balanceOf(user);
 
-    vars.userCollateralBalance += _getIthacaCollateral(user);
+
+    if (userConfig.isUsingAsCollateral(0)) {
+      vars.userCollateralBalance += _getIthacaCollateral(user);
+    }
 
     vars.maxLiquidatableDebt = vars.userStableDebt.add(vars.userVariableDebt).percentMul(
       LIQUIDATION_CLOSE_FACTOR_PERCENT

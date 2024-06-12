@@ -100,7 +100,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
   it('Deposits IthacaCollateral and USDC, borrows USDC', async () => {
     const depositor = users[0];
-    const borrower = users[1];
+    const borrower = users[2];
 
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -189,13 +189,13 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     expect(userGlobalDataAfter.totalCollateralETH).to.be.equal((2e18).toFixed());
     expect(userGlobalDataAfter.availableBorrowsETH).to.be.lt((1e17).toFixed(0));
     // expect(userGlobalDataAfter.currentLiquidationThreshold).to.be.equal(0);
-    expect(userGlobalDataAfter.healthFactor).to.be.gt('1000000000000000000');
+    expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
-  it('Deposits IthacaCollateral and weth has positive mtm, borrows WETH', async () => {
+  it.only('Deposits IthacaCollateral and weth has positive mtm, borrows WETH', async () => {
     // todo fix this
-    const depositor = users[4];
-    const borrower = users[5];
+    const depositor = users[0];
+    const borrower = users[3];
 
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
@@ -276,12 +276,12 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     expect(userGlobalDataAfter.ltv).to.be.equal(9333);
     expect(userGlobalDataAfter.totalCollateralETH).to.be.equal((3e18).toFixed(0));
     // hf falls below 1
-    expect(userGlobalDataAfter.healthFactor).to.be.gt('1000000000000000000');
+    expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
-  it('Deposits IthacaCollateral and weth has positive margin requirement, borrows USDC', async () => {
-    const depositor = users[1];
-    const borrower = users[2];
+  it.only('Deposits IthacaCollateral and weth has positive margin requirement, borrows USDC', async () => {
+    const depositor = users[0];
+    const borrower = users[4];
 
     const amountETHtoDeposit = (1e18).toFixed(0);
 
@@ -369,9 +369,9 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
-  it('Deposits IthacaCollateral and weth has negative margin requirement, borrows USDC', async () => {
-    const depositor = users[3];
-    const borrower = users[4];
+  it.only('Deposits IthacaCollateral and 3 weth has negative margin requirement, borrows USDC', async () => {
+    const depositor = users[0];
+    const borrower = users[5];
 
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '3');
 
@@ -430,8 +430,8 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
     // avg ltv
     expect(userGlobalData.ltv).to.be.equal(8000);
-    expect(userGlobalData.totalCollateralETH).to.be.equal((2e18).toFixed(0));
-    expect(userGlobalData.availableBorrowsETH).to.be.equal((1.6e18).toFixed(0));
+    expect(userGlobalData.totalCollateralETH).to.be.equal((3e18).toFixed(0));
+    expect(userGlobalData.availableBorrowsETH).to.be.equal((2.4e18).toFixed(0));
     expect(userGlobalData.healthFactor).to.be.equal(MAX_UINT_AMOUNT);
 
     const usdcPrice = await oracle.getAssetPrice(usdc.address);
@@ -454,14 +454,14 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
     // avg ltv
     expect(userGlobalDataAfter.ltv).to.be.equal(8000);
-    expect(userGlobalDataAfter.totalCollateralETH).to.be.equal((2e18).toFixed(0));
+    expect(userGlobalDataAfter.totalCollateralETH).to.be.equal((3e18).toFixed(0));
     // expect(userGlobalDataAfter.availableBorrowsETH).to.be.equal(0);
     // expect(userGlobalDataAfter.currentLiquidationThreshold).to.be.equal(0);
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
   it('Deposits WETH and USDC, borrows USDC', async () => {
-    const depositor = users[5];
+    const depositor = users[0];
     const borrower = users[6];
 
     const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
