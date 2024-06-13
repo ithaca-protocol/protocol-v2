@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 import {SafeMath} from "../../dependencies/openzeppelin/contracts//SafeMath.sol";
 import {IERC20} from "../../dependencies/openzeppelin/contracts//IERC20.sol";
@@ -70,10 +71,10 @@ contract LendingPoolCollateralManager is
 
   function _getIthacaCollateral(address user) internal view returns (uint256) {
     address ithacaFeed = _addressesProvider.getIthacaFeedOracle();
-    (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
+    IIthacaFeed.ClientParams memory params = IIthacaFeed(ithacaFeed)
       .getClientData(user);
 
-    return (uint256(int256(collateral) + mtm - maintenanceMargin));
+    return (uint256(int256(params.collateral) + params.mtm - params.maintenanceMargin));
   }
 
   /**

@@ -2,14 +2,14 @@ import BigNumber from 'bignumber.js';
 import { APPROVAL_AMOUNT_LENDING_POOL, MAX_UINT_AMOUNT } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { RateMode } from '../../helpers/types';
-import { IthacaFeed } from '../../types';
+import { MockIthacaFeed } from '../../types';
 import { makeSuite } from './helpers/make-suite';
 
 const chai = require('chai');
 const { expect } = chai;
 
 makeSuite('Ithaca-protocol e2e test', (testEnv) => {
-  let weth, users, pool, oracle, ithacaFeed: IthacaFeed, usdc, addressesProvider;
+  let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
 
   before('setup', async () => {
     ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
@@ -54,11 +54,10 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
     await ithacaFeed.setData(
       {
-        client: borrower.address,
         maintenanceMargin: 0,
         mtm: 0,
         collateral: amountETHtoDeposit,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );
@@ -146,11 +145,10 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
     await ithacaFeed.setData(
       {
-        client: borrower.address,
         maintenanceMargin: 0,
         mtm: 0,
         collateral: amountETHtoDeposit,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );
@@ -240,11 +238,10 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
 
     await ithacaFeed.setData(
       {
-        client: borrower.address,
         maintenanceMargin: 0,
         mtm: amountETHtoDeposit,
         collateral: amountETHtoDeposit,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );
@@ -366,11 +363,10 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
   async function resetIthacaFeed(client) {
     await ithacaFeed.setData(
       {
-        client,
         maintenanceMargin: 0,
         mtm: 0,
         collateral: 0,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );

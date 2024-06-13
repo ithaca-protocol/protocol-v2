@@ -55,7 +55,7 @@ import {
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
-  IthacaFeedFactory,
+  MockIthacaFeedFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -694,9 +694,9 @@ export const deployFlashLiquidationAdapter = async (
     verify
   );
 
-export const deployIthacaFeed = async (verify?: boolean) =>
+export const deployMockIthacaFeed = async (verify?: boolean) =>
   withSaveAndVerify(
-    await new IthacaFeedFactory(await getFirstSigner()).deploy(),
+    await new MockIthacaFeedFactory(await getFirstSigner()).deploy(),
     eContractid.IthacaFeed,
     [],
     verify

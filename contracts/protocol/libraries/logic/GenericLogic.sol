@@ -244,10 +244,9 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
   ) internal view returns (uint256) {
-    (, int256 maintenanceMargin, int256 mtm, uint256 collateral, ) = IIthacaFeed(ithacaFeed)
-      .getClientData(user);
+     IIthacaFeed.ClientParams memory params = IIthacaFeed(ithacaFeed).getClientData(user);
 
-    int netCollateral = (int256(collateral) + mtm - maintenanceMargin);
+    int netCollateral = (int256(params.collateral) + params.mtm - params.maintenanceMargin);
     return netCollateral > 0 ? uint256(netCollateral) : 0;
   }
 

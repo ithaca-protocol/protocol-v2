@@ -1,9 +1,10 @@
 import {
-  AaveProtocolDataProviderFactory,
   ATokenFactory,
   ATokensAndRatesHelperFactory,
   AaveOracleFactory,
+  AaveProtocolDataProviderFactory,
   DefaultReserveInterestRateStrategyFactory,
+  FlashLiquidationAdapterFactory,
   GenericLogicFactory,
   InitializableAdminUpgradeabilityProxyFactory,
   LendingPoolAddressesProviderFactory,
@@ -15,11 +16,12 @@ import {
   MintableERC20Factory,
   MockATokenFactory,
   MockFlashLoanReceiverFactory,
-  MockStableDebtTokenFactory,
-  MockVariableDebtTokenFactory,
-  MockUniswapV2Router02Factory,
+  MockIthacaFeedFactory,
   MockParaSwapAugustusFactory,
   MockParaSwapAugustusRegistryFactory,
+  MockStableDebtTokenFactory,
+  MockUniswapV2Router02Factory,
+  MockVariableDebtTokenFactory,
   ParaSwapLiquiditySwapAdapterFactory,
   PriceOracleFactory,
   ReserveLogicFactory,
@@ -29,16 +31,14 @@ import {
   UniswapLiquiditySwapAdapterFactory,
   UniswapRepayAdapterFactory,
   VariableDebtTokenFactory,
-  WalletBalanceProviderFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
-  FlashLiquidationAdapterFactory,
-  IthacaFeedFactory,
+  WalletBalanceProviderFactory
 } from '../types';
 import { IERC20DetailedFactory } from '../types/IERC20DetailedFactory';
-import { getEthersSigners, MockTokenMap } from './contracts-helpers';
+import { MockTokenMap, getEthersSigners } from './contracts-helpers';
 import { DRE, getDb, notFalsyOrZeroAddress, omit } from './misc-utils';
-import { eContractid, PoolConfiguration, tEthereumAddress, TokenContractId } from './types';
+import { PoolConfiguration, TokenContractId, eContractid, tEthereumAddress } from './types';
 
 export const getFirstSigner = async () => (await getEthersSigners())[0];
 
@@ -293,7 +293,7 @@ export const getWETHGateway = async (address?: tEthereumAddress) =>
   );
 
 export const getIthacaFeed = async (address?: tEthereumAddress) =>
-  await IthacaFeedFactory.connect(
+  await MockIthacaFeedFactory.connect(
     address || (await getDb().get(`${eContractid.IthacaFeed}.${DRE.network.name}`).value()).address,
     await getFirstSigner()
   );

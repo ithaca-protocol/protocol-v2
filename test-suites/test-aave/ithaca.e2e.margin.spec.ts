@@ -2,14 +2,14 @@ import BigNumber from 'bignumber.js';
 import { APPROVAL_AMOUNT_LENDING_POOL, MAX_UINT_AMOUNT } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { RateMode } from '../../helpers/types';
-import { IthacaFeed } from '../../types';
+import { MockIthacaFeed } from '../../types';
 import { makeSuite } from './helpers/make-suite';
 
 const chai = require('chai');
 const { expect } = chai;
 
 makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
-  let weth, users, pool, oracle, ithacaFeed: IthacaFeed, usdc, addressesProvider;
+  let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
 
   before('setup', async () => {
     ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
@@ -64,11 +64,10 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
 
     await ithacaFeed.setData(
       {
-        client: borrower.address,
         maintenanceMargin: (1e18).toFixed(0),
         mtm: 0,
         collateral: (1e18).toFixed(0),
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );
@@ -157,11 +156,10 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
 
     await ithacaFeed.setData(
       {
-        client: borrower.address,
         maintenanceMargin: 0,
         mtm: -0x0de0b6b3a7640000n,
         collateral: 0,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );
@@ -203,11 +201,10 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
   async function resetIthacaFeed(client) {
     await ithacaFeed.setData(
       {
-        client,
         maintenanceMargin: 0,
         mtm: 0,
         collateral: 0,
-        vaR: 0,
+        valueAtRisk: 0,
       },
       1
     );

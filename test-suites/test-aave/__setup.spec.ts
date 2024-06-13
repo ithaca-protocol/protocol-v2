@@ -32,7 +32,7 @@ import {
   authorizeWETHGateway,
   deployATokenImplementations,
   deployAaveOracle,
-  deployIthacaFeed,
+  deployMockIthacaFeed,
 } from '../../helpers/contracts-deployments';
 import { Signer } from 'ethers';
 import { TokenContractId, eContractid, tEthereumAddress, AavePools } from '../../helpers/types';
@@ -299,7 +299,7 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await deployUniswapRepayAdapter(adapterParams);
   await deployFlashLiquidationAdapter(adapterParams);
 
-  await deployIthacaFeed();
+  await deployMockIthacaFeed();
 
   const augustus = await deployMockParaSwapAugustus();
 
