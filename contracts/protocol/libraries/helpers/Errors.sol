@@ -103,6 +103,9 @@ library Errors {
   string public constant LP_NOT_CONTRACT = '78';
   string public constant SDT_STABLE_DEBT_OVERFLOW = '79';
   string public constant SDT_BURN_EXCEEDS_BALANCE = '80';
+  string public constant LPCM_ITHACA_NOT_DEBT_COLLATERAL = '81';
+  string public constant LPCM_RESERVE_NOT_ITHACA_COLLATERAL = '82';
+  string public constant LPCM_SENDER_NOT_RECEIVER = '83';
 
   enum CollateralManagerErrors {
     NO_ERROR,

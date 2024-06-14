@@ -27,6 +27,17 @@ interface ILendingPoolCollateralManager {
     bool receiveAToken
   );
 
+  // todo: can add a bitmap showing which asset reserves were used.
+  event LiquidateIthacaCollateral(
+    address indexed collateral,
+    address indexed principal,
+    address indexed user,
+    uint256 debtToCover,
+    uint256 liquidatedCollateralAmount,
+    address liquidator,
+    address receiver
+  );
+
   /**
    * @dev Emitted when a reserve is disabled as collateral for an user
    * @param reserve The address of the reserve
@@ -40,6 +51,8 @@ interface ILendingPoolCollateralManager {
    * @param user The address of the user
    **/
   event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
+
+  event ReceiverChanged(address account);
 
   /**
    * @dev Users can invoke this function to liquidate an undercollateralized position.
@@ -56,5 +69,14 @@ interface ILendingPoolCollateralManager {
     address user,
     uint256 debtToCover,
     bool receiveAToken
+  ) external returns (uint256, string memory);
+
+  function liquidateIthacaCollateral(
+    address user,
+    uint256 debtToCover,
+    address collateralAsset,
+    address debtAsset,
+    uint256 maxCollateralToLiquidate,
+    address receiver
   ) external returns (uint256, string memory);
 }
