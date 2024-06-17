@@ -154,7 +154,7 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await setInitialAssetPricesInOracle(
     ALL_ASSETS_INITIAL_PRICES,
     {
-      ITH: "0x",
+      ITH: mockTokens.ITH.address,
       WETH: mockTokens.WETH.address,
       DAI: mockTokens.DAI.address,
       TUSD: mockTokens.TUSD.address,
@@ -326,10 +326,8 @@ before(async () => {
     console.log('-> Deploying test environment...');
     await buildTestEnv(deployer, secondaryWallet);
   }
-  console.log('>>here');
 
   await initializeMakeSuite();
-  console.log('>>here inited');
   console.log('\n***************');
   console.log('Setup and snapshot finished');
   console.log('***************\n');

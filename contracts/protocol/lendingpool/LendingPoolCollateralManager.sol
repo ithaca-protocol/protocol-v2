@@ -2,24 +2,24 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from '../../dependencies/openzeppelin/contracts//SafeMath.sol';
-import {IERC20} from '../../dependencies/openzeppelin/contracts//IERC20.sol';
-import {IAToken} from '../../interfaces/IAToken.sol';
-import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
-import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
-import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
-import {ILendingPoolCollateralManager} from '../../interfaces/ILendingPoolCollateralManager.sol';
-import {VersionedInitializable} from '../libraries/aave-upgradeability/VersionedInitializable.sol';
-import {GenericLogic} from '../libraries/logic/GenericLogic.sol';
-import {Helpers} from '../libraries/helpers/Helpers.sol';
-import {WadRayMath} from '../libraries/math/WadRayMath.sol';
-import {PercentageMath} from '../libraries/math/PercentageMath.sol';
-import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {Errors} from '../libraries/helpers/Errors.sol';
-import {ValidationLogic} from '../libraries/logic/ValidationLogic.sol';
-import {DataTypes} from '../libraries/types/DataTypes.sol';
-import {LendingPoolStorage} from './LendingPoolStorage.sol';
-import {IIthacaFeed} from '../ithaca/IIthacaFeed.sol';
+import {SafeMath} from "../../dependencies/openzeppelin/contracts//SafeMath.sol";
+import {IERC20} from "../../dependencies/openzeppelin/contracts//IERC20.sol";
+import {IAToken} from "../../interfaces/IAToken.sol";
+import {IStableDebtToken} from "../../interfaces/IStableDebtToken.sol";
+import {IVariableDebtToken} from "../../interfaces/IVariableDebtToken.sol";
+import {IPriceOracleGetter} from "../../interfaces/IPriceOracleGetter.sol";
+import {ILendingPoolCollateralManager} from "../../interfaces/ILendingPoolCollateralManager.sol";
+import {VersionedInitializable} from "../libraries/aave-upgradeability/VersionedInitializable.sol";
+import {GenericLogic} from "../libraries/logic/GenericLogic.sol";
+import {Helpers} from "../libraries/helpers/Helpers.sol";
+import {WadRayMath} from "../libraries/math/WadRayMath.sol";
+import {PercentageMath} from "../libraries/math/PercentageMath.sol";
+import {SafeERC20} from "../../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {Errors} from "../libraries/helpers/Errors.sol";
+import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
+import {DataTypes} from "../libraries/types/DataTypes.sol";
+import {LendingPoolStorage} from "./LendingPoolStorage.sol";
+import {IIthacaFeed} from "../ithaca/IIthacaFeed.sol";
 
 /**
  * @title LendingPoolCollateralManager contract
@@ -77,11 +77,10 @@ contract LendingPoolCollateralManager is
     uint256 maxCollateralToLiquidate,
     address receiver
   ) external override returns (uint256, string memory) {
-    DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
+    address ithacaAsset = _reservesList[0];
+    DataTypes.ReserveData storage ithacaReserve = _reserves[ithacaAsset];
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
-
-    require(collateralReserve.id == 0, Errors.LPCM_RESERVE_NOT_ITHACA_COLLATERAL);
 
     LiquidationCallLocalVars memory vars;
 
@@ -100,7 +99,7 @@ contract LendingPoolCollateralManager is
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
     (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
-      collateralReserve,
+      ithacaReserve,
       debtReserve,
       userConfig,
       vars.healthFactor,
@@ -118,9 +117,9 @@ contract LendingPoolCollateralManager is
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
     ) = _calculateAvailableCollateralToLiquidate(
-      collateralReserve,
+      ithacaReserve,
       debtReserve,
-      collateralAsset,
+      ithacaAsset,
       debtAsset,
       vars.actualDebtToLiquidate,
       maxCollateralToLiquidate
@@ -164,9 +163,14 @@ contract LendingPoolCollateralManager is
       0
     );
 
+    require(
+      IERC20(collateralAsset).allowance(msg.sender, address(this)) >= vars.maxCollateralToLiquidate,
+      Errors.FL_NOT_ENOUGH_ALLOWANCE
+    );
+
     // transfer collateral to liquidator
     // fundlock will initiate this, it will be transfered to a default address
-    IERC20(collateralAsset).transferFrom(user, receiver, vars.maxCollateralToLiquidate);
+    IERC20(collateralAsset).transferFrom(msg.sender, receiver, vars.maxCollateralToLiquidate);
 
     emit LiquidateIthacaCollateral(
       collateralAsset,

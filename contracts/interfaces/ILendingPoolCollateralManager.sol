@@ -27,7 +27,6 @@ interface ILendingPoolCollateralManager {
     bool receiveAToken
   );
 
-  // todo: can add a bitmap showing which asset reserves were used.
   event LiquidateIthacaCollateral(
     address indexed collateral,
     address indexed principal,

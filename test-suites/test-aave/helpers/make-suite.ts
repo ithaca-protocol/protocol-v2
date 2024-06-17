@@ -53,6 +53,7 @@ export interface SignerWithAddress {
   address: tEthereumAddress;
 }
 export interface TestEnv {
+  ithaca: MintableERC20;
   deployer: SignerWithAddress;
   users: SignerWithAddress[];
   pool: LendingPool;
@@ -72,7 +73,7 @@ export interface TestEnv {
   wethGateway: WETHGateway;
   flashLiquidationAdapter: FlashLiquidationAdapter;
   paraswapLiquiditySwapAdapter: ParaSwapLiquiditySwapAdapter;
-  ithacaFeed: IthacaFeed
+  ithacaFeed: IthacaFeed;
 }
 
 let buidlerevmSnapshotId: string = '0x1';
@@ -100,7 +101,7 @@ const testEnv: TestEnv = {
   paraswapLiquiditySwapAdapter: {} as ParaSwapLiquiditySwapAdapter,
   registry: {} as LendingPoolAddressesProviderRegistry,
   wethGateway: {} as WETHGateway,
-  ithacaFeed: {} as IthacaFeed
+  ithacaFeed: {} as IthacaFeed,
 } as TestEnv;
 
 export async function initializeMakeSuite() {
@@ -145,6 +146,7 @@ export async function initializeMakeSuite() {
   const usdcAddress = reservesTokens.find((token) => token.symbol === 'USDC')?.tokenAddress;
   const aaveAddress = reservesTokens.find((token) => token.symbol === 'AAVE')?.tokenAddress;
   const wethAddress = reservesTokens.find((token) => token.symbol === 'WETH')?.tokenAddress;
+  const ithacaTokenAddress = reservesTokens.find((token) => token.symbol === 'ITH')?.tokenAddress;
 
   if (!aDaiAddress || !aWEthAddress) {
     process.exit(1);
@@ -160,6 +162,7 @@ export async function initializeMakeSuite() {
   testEnv.usdc = await getMintableERC20(usdcAddress);
   testEnv.aave = await getMintableERC20(aaveAddress);
   testEnv.weth = await getWETHMocked(wethAddress);
+  testEnv.ithacaToken = await getMintableERC20(ithacaTokenAddress);
   testEnv.wethGateway = await getWETHGateway();
 
   testEnv.ithacaFeed = await getIthacaFeed();

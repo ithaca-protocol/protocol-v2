@@ -106,6 +106,7 @@ library Errors {
   string public constant LPCM_ITHACA_NOT_DEBT_COLLATERAL = '81';
   string public constant LPCM_RESERVE_NOT_ITHACA_COLLATERAL = '82';
   string public constant LPCM_SENDER_NOT_RECEIVER = '83';
+  string public constant FL_NOT_ENOUGH_ALLOWANCE = '84';
 
   enum CollateralManagerErrors {
     NO_ERROR,

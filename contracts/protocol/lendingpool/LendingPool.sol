@@ -469,7 +469,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidateIthacaCollateral(address, uint256, address, address, uint256, address)',
+        'liquidateIthacaCollateral(address,uint256,address,address,uint256,address)',
         user,
         debtToCover,
         collateralAsset,
