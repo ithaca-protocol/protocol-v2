@@ -288,6 +288,14 @@ interface ILendingPool {
     bool receiveAToken
   ) external;
 
+  function liquidateIthacaCollateral(
+    address user,
+    uint256 debtToCover,
+    address collateralAsset,
+    address debtAsset,
+    uint256 maxCollateralToLiquidate
+  ) external;
+
   /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
    * as long as the amount taken plus a fee is returned.

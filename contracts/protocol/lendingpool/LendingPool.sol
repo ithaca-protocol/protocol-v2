@@ -462,7 +462,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address collateralAsset,
     address debtAsset,
     uint256 maxCollateralToLiquidate
-  ) external {
+  ) external override {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
     address receiver = _addressesProvider.getReceiverAccount();
 
