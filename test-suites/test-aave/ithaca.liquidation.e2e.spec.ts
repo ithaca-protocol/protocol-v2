@@ -13,13 +13,7 @@ const chai = require('chai');
 const { expect } = chai;
 
 makeSuite('', (testEnv) => {
-  const {
-    LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD,
-    INVALID_HF,
-    LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER,
-    LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED,
-    LP_IS_PAUSED,
-  } = ProtocolErrors;
+  const { INVALID_HF } = ProtocolErrors;
 
   describe('liquidate usdc borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
@@ -74,11 +68,6 @@ makeSuite('', (testEnv) => {
       await pool
         .connect(depositor.signer)
         .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
-
-      //mints WETH to borrower
-      //   await weth
-      //     .connect(borrower.signer)
-      //     .mint(await convertToCurrencyDecimals(weth.address, '1000'));
 
       await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
@@ -197,13 +186,7 @@ makeSuite('', (testEnv) => {
 });
 
 makeSuite('', (testEnv) => {
-  const {
-    LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD,
-    INVALID_HF,
-    LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER,
-    LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED,
-    LP_IS_PAUSED,
-  } = ProtocolErrors;
+  const { INVALID_HF } = ProtocolErrors;
 
   describe('liquidate weth borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
@@ -257,11 +240,6 @@ makeSuite('', (testEnv) => {
       await pool
         .connect(depositor.signer)
         .deposit(weth.address, amountOfETHtoDeposit, depositor.address, '0');
-
-      //mints WETH to borrower
-      //   await weth
-      //     .connect(borrower.signer)
-      //     .mint(await convertToCurrencyDecimals(weth.address, '1000'));
 
       await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
@@ -351,7 +329,6 @@ makeSuite('', (testEnv) => {
           (10e18).toFixed(0)
         );
 
-      //   fundlockBalance deducted, will be equal to the collateral of the borrower, in current scenario.
       await ithacaFeed.setData(
         {
           maintenanceMargin: 0,
