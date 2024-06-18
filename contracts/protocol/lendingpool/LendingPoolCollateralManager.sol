@@ -60,6 +60,12 @@ contract LendingPoolCollateralManager is
     string errorMsg;
   }
 
+  struct CollateralData {
+    uint256 decimals;
+    uint256 price;
+    uint256 liquidationBonus;
+  }
+
   /**
    * @dev As thIS contract extends the VersionedInitializable contract to match the state
    * of the LendingPool contract, the getRevision() function is needed, but the value is not
@@ -78,8 +84,6 @@ contract LendingPoolCollateralManager is
     address receiver
   ) external override returns (uint256, string memory) {
     address ithacaAsset = _reservesList[0];
-    DataTypes.ReserveData storage ithacaReserve = _reserves[ithacaAsset];
-    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
 
     LiquidationCallLocalVars memory vars;
@@ -96,10 +100,12 @@ contract LendingPoolCollateralManager is
       )
     );
 
+    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
+
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
     (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
-      ithacaReserve,
+      _reserves[ithacaAsset],
       debtReserve,
       userConfig,
       vars.healthFactor,
@@ -113,16 +119,26 @@ contract LendingPoolCollateralManager is
 
     vars.actualDebtToLiquidate = debtToCover;
 
+    CollateralData memory collateralVars;
+
+    (, , , collateralVars.decimals, ) = _reserves[collateralAsset].configuration.getParams();
+
+    (, , collateralVars.liquidationBonus, , ) = _reserves[ithacaAsset].configuration.getParams();
+
+    IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
+    collateralVars.price = oracle.getAssetPrice(collateralAsset);
+
     (
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
     ) = _calculateAvailableCollateralToLiquidate(
-      ithacaReserve,
+      _reserves[ithacaAsset],
       debtReserve,
       ithacaAsset,
       debtAsset,
       vars.actualDebtToLiquidate,
-      maxCollateralToLiquidate
+      maxCollateralToLiquidate,
+      collateralVars
     );
 
     // If debtAmountNeeded < actualDebtToLiquidate, there isn't enough
@@ -254,6 +270,16 @@ contract LendingPoolCollateralManager is
       ? vars.maxLiquidatableDebt
       : debtToCover;
 
+    CollateralData memory collateralVars;
+
+    IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
+
+    collateralVars.price = oracle.getAssetPrice(collateralAsset);
+
+    (, , collateralVars.liquidationBonus, collateralVars.decimals, ) = collateralReserve
+      .configuration
+      .getParams();
+
     (
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
@@ -263,7 +289,8 @@ contract LendingPoolCollateralManager is
       collateralAsset,
       debtAsset,
       vars.actualDebtToLiquidate,
-      vars.userCollateralBalance
+      vars.userCollateralBalance,
+      collateralVars
     );
 
     // If debtAmountNeeded < actualDebtToLiquidate, there isn't enough
@@ -403,20 +430,19 @@ contract LendingPoolCollateralManager is
     address collateralAsset,
     address debtAsset,
     uint256 debtToCover,
-    uint256 userCollateralBalance
+    uint256 userCollateralBalance,
+    CollateralData memory collateralVars
   ) internal view returns (uint256, uint256) {
     uint256 collateralAmount = 0;
     uint256 debtAmountNeeded = 0;
     IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
 
     AvailableCollateralToLiquidateLocalVars memory vars;
-
-    vars.collateralPrice = oracle.getAssetPrice(collateralAsset);
+    vars.collateralPrice = collateralVars.price;
     vars.debtAssetPrice = oracle.getAssetPrice(debtAsset);
+    vars.liquidationBonus = collateralVars.liquidationBonus;
+    vars.collateralDecimals = collateralVars.decimals;
 
-    (, , vars.liquidationBonus, vars.collateralDecimals, ) = collateralReserve
-      .configuration
-      .getParams();
     vars.debtAssetDecimals = debtReserve.configuration.getDecimals();
 
     // This is the maximum possible amount of the selected collateral that can be liquidated, given the
