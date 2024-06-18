@@ -12,7 +12,7 @@ import { getUserData } from './helpers/utils/helpers';
 const chai = require('chai');
 const { expect } = chai;
 
-makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => {
+makeSuite('', (testEnv) => {
   const {
     LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD,
     INVALID_HF,
@@ -21,7 +21,7 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     LP_IS_PAUSED,
   } = ProtocolErrors;
 
-  describe('covers partial debt', () => {
+  describe('liquidate usdc borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
@@ -196,7 +196,7 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
   });
 });
 
-makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => {
+makeSuite('', (testEnv) => {
   const {
     LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD,
     INVALID_HF,
@@ -205,7 +205,7 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
     LP_IS_PAUSED,
   } = ProtocolErrors;
 
-  describe('covers entire debt', () => {
+  describe('liquidate weth borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
