@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {IIthacaFeed} from "../../protocol/ithaca/IIthacaFeed.sol";
+import {IIthacaFeed} from '../../protocol/ithaca/IIthacaFeed.sol';
 
 contract MockIthacaFeed is IIthacaFeed {
   ClientParams clientData;

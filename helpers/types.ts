@@ -15,7 +15,7 @@ export enum eEthereumNetwork {
   hardhat = 'hardhat',
   arb = 'arb',
   tenderly = 'tenderly',
-  goerli = 'goerli'
+  goerli = 'goerli',
 }
 
 export enum ePolygonNetwork {
@@ -41,7 +41,7 @@ export enum EthereumNetworkNames {
   xdai = 'xdai',
   avalanche = 'avalanche',
   fuji = 'fuji',
-  arb= 'arb-sepolia',
+  arb = 'arb-sepolia',
 }
 
 export enum AavePools {

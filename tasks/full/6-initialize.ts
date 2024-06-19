@@ -98,13 +98,9 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
         )
       );
 
-      await waitForTx(
-        await addressesProvider.setIthacaFeedOracle(process.env.ITHACA_FEED)
-      );
+      await waitForTx(await addressesProvider.setIthacaFeedOracle(process.env.ITHACA_FEED));
 
-      await waitForTx(
-        await addressesProvider.setReceiverAccount(process?.env?.RECEIVER)
-      );
+      await waitForTx(await addressesProvider.setReceiverAccount(process?.env?.RECEIVER));
 
       await deployWalletBalancerProvider(verify);
 

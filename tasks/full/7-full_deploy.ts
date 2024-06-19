@@ -21,7 +21,7 @@ task('full:deploy', 'Deploy development enviroment')
     // await localBRE.run('dev:deploy-mock-tokens', { verify });
 
     console.log('2. Deploy address provider');
-    await localBRE.run('full:deploy-address-provider-registry', { verify, pool: POOL_NAME});
+    await localBRE.run('full:deploy-address-provider-registry', { verify, pool: POOL_NAME });
     await localBRE.run('full:deploy-address-provider', { verify, pool: POOL_NAME });
 
     console.log('3. Deploy lending pool');

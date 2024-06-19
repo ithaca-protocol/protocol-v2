@@ -2,20 +2,20 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {VersionedInitializable} from "../libraries/aave-upgradeability/VersionedInitializable.sol";
-import {InitializableImmutableAdminUpgradeabilityProxy} from "../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol";
-import {ReserveConfiguration} from "../libraries/configuration/ReserveConfiguration.sol";
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
-import {ILendingPool} from "../../interfaces/ILendingPool.sol";
-import {IERC20Detailed} from "../../dependencies/openzeppelin/contracts/IERC20Detailed.sol";
-import {Errors} from "../libraries/helpers/Errors.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {IInitializableDebtToken} from "../../interfaces/IInitializableDebtToken.sol";
-import {IInitializableAToken} from "../../interfaces/IInitializableAToken.sol";
-import {IAaveIncentivesController} from "../../interfaces/IAaveIncentivesController.sol";
-import {ILendingPoolConfigurator} from "../../interfaces/ILendingPoolConfigurator.sol";
+import {SafeMath} from '../../dependencies/openzeppelin/contracts/SafeMath.sol';
+import {VersionedInitializable} from '../libraries/aave-upgradeability/VersionedInitializable.sol';
+import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
+import {ReserveConfiguration} from '../libraries/configuration/ReserveConfiguration.sol';
+import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
+import {ILendingPool} from '../../interfaces/ILendingPool.sol';
+import {IERC20Detailed} from '../../dependencies/openzeppelin/contracts/IERC20Detailed.sol';
+import {Errors} from '../libraries/helpers/Errors.sol';
+import {PercentageMath} from '../libraries/math/PercentageMath.sol';
+import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {IInitializableDebtToken} from '../../interfaces/IInitializableDebtToken.sol';
+import {IInitializableAToken} from '../../interfaces/IInitializableAToken.sol';
+import {IAaveIncentivesController} from '../../interfaces/IAaveIncentivesController.sol';
+import {ILendingPoolConfigurator} from '../../interfaces/ILendingPoolConfigurator.sol';
 
 /**
  * @title LendingPoolConfigurator contract

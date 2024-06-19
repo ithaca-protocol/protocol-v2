@@ -2,24 +2,24 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "../../dependencies/openzeppelin/contracts//SafeMath.sol";
-import {IERC20} from "../../dependencies/openzeppelin/contracts//IERC20.sol";
-import {IAToken} from "../../interfaces/IAToken.sol";
-import {IStableDebtToken} from "../../interfaces/IStableDebtToken.sol";
-import {IVariableDebtToken} from "../../interfaces/IVariableDebtToken.sol";
-import {IPriceOracleGetter} from "../../interfaces/IPriceOracleGetter.sol";
-import {ILendingPoolCollateralManager} from "../../interfaces/ILendingPoolCollateralManager.sol";
-import {VersionedInitializable} from "../libraries/aave-upgradeability/VersionedInitializable.sol";
-import {GenericLogic} from "../libraries/logic/GenericLogic.sol";
-import {Helpers} from "../libraries/helpers/Helpers.sol";
-import {WadRayMath} from "../libraries/math/WadRayMath.sol";
-import {PercentageMath} from "../libraries/math/PercentageMath.sol";
-import {SafeERC20} from "../../dependencies/openzeppelin/contracts/SafeERC20.sol";
-import {Errors} from "../libraries/helpers/Errors.sol";
-import {ValidationLogic} from "../libraries/logic/ValidationLogic.sol";
-import {DataTypes} from "../libraries/types/DataTypes.sol";
-import {LendingPoolStorage} from "./LendingPoolStorage.sol";
-import {IIthacaFeed} from "../ithaca/IIthacaFeed.sol";
+import {SafeMath} from '../../dependencies/openzeppelin/contracts//SafeMath.sol';
+import {IERC20} from '../../dependencies/openzeppelin/contracts//IERC20.sol';
+import {IAToken} from '../../interfaces/IAToken.sol';
+import {IStableDebtToken} from '../../interfaces/IStableDebtToken.sol';
+import {IVariableDebtToken} from '../../interfaces/IVariableDebtToken.sol';
+import {IPriceOracleGetter} from '../../interfaces/IPriceOracleGetter.sol';
+import {ILendingPoolCollateralManager} from '../../interfaces/ILendingPoolCollateralManager.sol';
+import {VersionedInitializable} from '../libraries/aave-upgradeability/VersionedInitializable.sol';
+import {GenericLogic} from '../libraries/logic/GenericLogic.sol';
+import {Helpers} from '../libraries/helpers/Helpers.sol';
+import {WadRayMath} from '../libraries/math/WadRayMath.sol';
+import {PercentageMath} from '../libraries/math/PercentageMath.sol';
+import {SafeERC20} from '../../dependencies/openzeppelin/contracts/SafeERC20.sol';
+import {Errors} from '../libraries/helpers/Errors.sol';
+import {ValidationLogic} from '../libraries/logic/ValidationLogic.sol';
+import {DataTypes} from '../libraries/types/DataTypes.sol';
+import {LendingPoolStorage} from './LendingPoolStorage.sol';
+import {IIthacaFeed} from '../ithaca/IIthacaFeed.sol';
 
 /**
  * @title LendingPoolCollateralManager contract

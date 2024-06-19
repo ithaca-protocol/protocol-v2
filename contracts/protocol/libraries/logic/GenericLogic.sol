@@ -2,16 +2,16 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
-import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
-import {ReserveLogic} from "./ReserveLogic.sol";
-import {ReserveConfiguration} from "../configuration/ReserveConfiguration.sol";
-import {UserConfiguration} from "../configuration/UserConfiguration.sol";
-import {WadRayMath} from "../math/WadRayMath.sol";
-import {PercentageMath} from "../math/PercentageMath.sol";
-import {IPriceOracleGetter} from "../../../interfaces/IPriceOracleGetter.sol";
-import {DataTypes} from "../types/DataTypes.sol";
-import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
+import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
+import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
+import {ReserveLogic} from './ReserveLogic.sol';
+import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
+import {UserConfiguration} from '../configuration/UserConfiguration.sol';
+import {WadRayMath} from '../math/WadRayMath.sol';
+import {PercentageMath} from '../math/PercentageMath.sol';
+import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
+import {DataTypes} from '../types/DataTypes.sol';
+import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
 
 /**
  * @title GenericLogic library
@@ -244,7 +244,7 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars,
     address ithacaFeed
   ) internal view returns (uint256) {
-     IIthacaFeed.ClientParams memory params = IIthacaFeed(ithacaFeed).getClientData(user);
+    IIthacaFeed.ClientParams memory params = IIthacaFeed(ithacaFeed).getClientData(user);
 
     int netCollateral = (int256(params.collateral) + params.mtm - params.maintenanceMargin);
     return netCollateral > 0 ? uint256(netCollateral) : 0;

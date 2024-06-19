@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
 
-import {Ownable} from "../../dependencies/openzeppelin/contracts/Ownable.sol";
+import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
 
 // Prettier ignore to prevent buidler flatter bug
 // prettier-ignore
 import {InitializableImmutableAdminUpgradeabilityProxy} from '../libraries/aave-upgradeability/InitializableImmutableAdminUpgradeabilityProxy.sol';
 
-import {ILendingPoolAddressesProvider} from "../../interfaces/ILendingPoolAddressesProvider.sol";
+import {ILendingPoolAddressesProvider} from '../../interfaces/ILendingPoolAddressesProvider.sol';
 
 /**
  * @title LendingPoolAddressesProvider contract
@@ -20,15 +20,15 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   string private _marketId;
   mapping(bytes32 => address) private _addresses;
 
-  bytes32 private constant LENDING_POOL = "LENDING_POOL";
-  bytes32 private constant LENDING_POOL_CONFIGURATOR = "LENDING_POOL_CONFIGURATOR";
-  bytes32 private constant POOL_ADMIN = "POOL_ADMIN";
-  bytes32 private constant EMERGENCY_ADMIN = "EMERGENCY_ADMIN";
-  bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = "COLLATERAL_MANAGER";
-  bytes32 private constant PRICE_ORACLE = "PRICE_ORACLE";
-  bytes32 private constant LENDING_RATE_ORACLE = "LENDING_RATE_ORACLE";
-  bytes32 private constant ITHACA_FEED_ORACLE = "ITHACA_FEED_ORACLE";
-  bytes32 private constant ITHACA_RECEIVER_ACCOUNT = "ITHACA_RECEIVER_ACCOUNT";
+  bytes32 private constant LENDING_POOL = 'LENDING_POOL';
+  bytes32 private constant LENDING_POOL_CONFIGURATOR = 'LENDING_POOL_CONFIGURATOR';
+  bytes32 private constant POOL_ADMIN = 'POOL_ADMIN';
+  bytes32 private constant EMERGENCY_ADMIN = 'EMERGENCY_ADMIN';
+  bytes32 private constant LENDING_POOL_COLLATERAL_MANAGER = 'COLLATERAL_MANAGER';
+  bytes32 private constant PRICE_ORACLE = 'PRICE_ORACLE';
+  bytes32 private constant LENDING_RATE_ORACLE = 'LENDING_RATE_ORACLE';
+  bytes32 private constant ITHACA_FEED_ORACLE = 'ITHACA_FEED_ORACLE';
+  bytes32 private constant ITHACA_RECEIVER_ACCOUNT = 'ITHACA_RECEIVER_ACCOUNT';
 
   constructor(string memory marketId) public {
     _setMarketId(marketId);
@@ -216,7 +216,7 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
     InitializableImmutableAdminUpgradeabilityProxy proxy = InitializableImmutableAdminUpgradeabilityProxy(
         proxyAddress
       );
-    bytes memory params = abi.encodeWithSignature("initialize(address)", address(this));
+    bytes memory params = abi.encodeWithSignature('initialize(address)', address(this));
 
     if (proxyAddress == address(0)) {
       proxy = new InitializableImmutableAdminUpgradeabilityProxy(address(this));

@@ -33,7 +33,7 @@ import {
   VariableDebtTokenFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
-  WalletBalanceProviderFactory
+  WalletBalanceProviderFactory,
 } from '../types';
 import { IERC20DetailedFactory } from '../types/IERC20DetailedFactory';
 import { MockTokenMap, getEthersSigners } from './contracts-helpers';

@@ -2,9 +2,7 @@
 pragma solidity 0.6.12;
 
 import {Ownable} from '../../dependencies/openzeppelin/contracts/Ownable.sol';
-import {
-  ILendingPoolAddressesProviderRegistry
-} from '../../interfaces/ILendingPoolAddressesProviderRegistry.sol';
+import {ILendingPoolAddressesProviderRegistry} from '../../interfaces/ILendingPoolAddressesProviderRegistry.sol';
 import {Errors} from '../libraries/helpers/Errors.sol';
 
 /**
@@ -66,12 +64,9 @@ contract LendingPoolAddressesProviderRegistry is Ownable, ILendingPoolAddressesP
    * @dev Returns the id on a registered LendingPoolAddressesProvider
    * @return The id or 0 if the LendingPoolAddressesProvider is not registered
    */
-  function getAddressesProviderIdByAddress(address addressesProvider)
-    external
-    view
-    override
-    returns (uint256)
-  {
+  function getAddressesProviderIdByAddress(
+    address addressesProvider
+  ) external view override returns (uint256) {
     return _addressesProviders[addressesProvider];
   }
 
