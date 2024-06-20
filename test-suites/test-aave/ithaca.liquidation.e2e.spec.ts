@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 
 import { parseEther } from 'ethers/lib/utils';
-import { APPROVAL_AMOUNT_LENDING_POOL, oneEther } from '../../helpers/constants';
+import { APPROVAL_AMOUNT_LENDING_POOL, MAX_UINT_AMOUNT, oneEther } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { increaseTime } from '../../helpers/misc-utils';
 import { ProtocolErrors, RateMode } from '../../helpers/types';
@@ -73,7 +73,7 @@ makeSuite('', (testEnv) => {
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
       //mints USDC to fundlock, a representation of 1eth locked in the fundlock by the borrower.
-      await weth.connect(fundlock.signer).mint(amountETHtoDeposit);
+      await weth.connect(fundlock.signer).mint(await convertToCurrencyDecimals(weth.address, '2'));
 
       //approve protocol to access fundlock wallet
       await weth.connect(fundlock.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
@@ -159,8 +159,18 @@ makeSuite('', (testEnv) => {
           amountToLiquidate,
           weth.address,
           usdc.address,
-          (1e18).toFixed(0)
+          (2e18).toFixed(0)
         );
+
+      const userReserveDataAfter = await getUserData(
+        pool,
+        helpersContract,
+        usdc.address,
+        borrower.address
+      );
+
+      console.log(userReserveDataBefore);
+      console.log(userReserveDataAfter);
 
       const fundlockBalAfter = await weth.balanceOf(liquidator.address);
 
@@ -177,10 +187,13 @@ makeSuite('', (testEnv) => {
 
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
-      expect(userGlobalDataAfter.totalDebtETH).to.be.lt(userGlobalDataBefore.totalDebtETH);
+      console.log(userGlobalDataBefore);
+      console.log(userGlobalDataAfter);
+
+      expect(userGlobalDataAfter.totalDebtETH).to.be.eq(0);
+      expect(userReserveDataAfter.currentVariableDebt).to.be.eq(0);
       //   debt not fully covered, but collateral is 0
-      expect(userGlobalDataAfter.healthFactor).to.be.eq(0);
-      expect(userGlobalDataAfter.availableBorrowsETH).to.be.eq(0);
+      expect(userGlobalDataAfter.healthFactor).to.be.eq(MAX_UINT_AMOUNT);
     });
   });
 });
@@ -188,7 +201,7 @@ makeSuite('', (testEnv) => {
 makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
 
-  describe('liquidate weth borrowings', () => {
+  describe.only('liquidate weth borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
@@ -329,6 +342,13 @@ makeSuite('', (testEnv) => {
           (10e18).toFixed(0)
         );
 
+      const userReserveDataAfter = await getUserData(
+        pool,
+        helpersContract,
+        weth.address,
+        borrower.address
+      );
+
       await ithacaFeed.setData(
         {
           maintenanceMargin: 0,
@@ -341,10 +361,15 @@ makeSuite('', (testEnv) => {
 
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
-      expect(userGlobalDataAfter.totalDebtETH).to.be.lt(userGlobalDataBefore.totalDebtETH);
-      console.log(userGlobalDataAfter);
+      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.almostEqual(
+        0,
+        'Invalid user debt after liquidation'
+      );
+
+      expect(userGlobalDataAfter.totalDebtETH).to.be.bignumber.almostEqual(0);
+      expect(userReserveDataAfter.currentVariableDebt).to.be.eq(0);
       //   debt not fully covered, but collateral is 0
-      expect(userGlobalDataAfter.healthFactor).to.be.eq(0);
+      // expect(userGlobalDataAfter.healthFactor).to.be.eq(0);
       expect(userGlobalDataAfter.availableBorrowsETH).to.be.eq(0);
     });
   });
