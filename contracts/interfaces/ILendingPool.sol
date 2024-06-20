@@ -285,7 +285,7 @@ interface ILendingPool {
     address collateralAsset,
     address debtAsset,
     uint256 maxCollateralToLiquidate
-  ) external;
+  ) external returns (uint256);
 
   /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,

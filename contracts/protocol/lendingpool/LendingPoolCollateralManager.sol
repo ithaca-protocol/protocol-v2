@@ -82,8 +82,7 @@ contract LendingPoolCollateralManager is
     address debtAsset,
     uint256 maxCollateralToLiquidate,
     address receiver
-  ) external override returns (uint256, string memory) {
-    address ithacaAsset = _reservesList[0];
+  ) external override returns (uint256, uint256, string memory) {
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
 
     LiquidationCallLocalVars memory vars;
@@ -105,7 +104,7 @@ contract LendingPoolCollateralManager is
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
     (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
-      _reserves[ithacaAsset],
+      _reserves[_reservesList[0]],
       debtReserve,
       userConfig,
       vars.healthFactor,
@@ -114,7 +113,7 @@ contract LendingPoolCollateralManager is
     );
 
     if (Errors.CollateralManagerErrors(vars.errorCode) != Errors.CollateralManagerErrors.NO_ERROR) {
-      return (vars.errorCode, vars.errorMsg);
+      return (0, vars.errorCode, vars.errorMsg);
     }
 
     vars.actualDebtToLiquidate = debtToCover;
@@ -123,7 +122,9 @@ contract LendingPoolCollateralManager is
 
     (, , , collateralVars.decimals, ) = _reserves[collateralAsset].configuration.getParams();
 
-    (, , collateralVars.liquidationBonus, , ) = _reserves[ithacaAsset].configuration.getParams();
+    (, , collateralVars.liquidationBonus, , ) = _reserves[_reservesList[0]]
+      .configuration
+      .getParams();
 
     IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
     collateralVars.price = oracle.getAssetPrice(collateralAsset);
@@ -132,9 +133,9 @@ contract LendingPoolCollateralManager is
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
     ) = _calculateAvailableCollateralToLiquidate(
-      _reserves[ithacaAsset],
+      _reserves[_reservesList[0]],
       debtReserve,
-      ithacaAsset,
+      _reservesList[0],
       debtAsset,
       vars.actualDebtToLiquidate,
       maxCollateralToLiquidate,
@@ -198,7 +199,11 @@ contract LendingPoolCollateralManager is
       receiver
     );
 
-    return (uint256(Errors.CollateralManagerErrors.NO_ERROR), Errors.LPCM_NO_ERRORS);
+    return (
+      vars.maxCollateralToLiquidate,
+      uint256(Errors.CollateralManagerErrors.NO_ERROR),
+      Errors.LPCM_NO_ERRORS
+    );
   }
 
   /**

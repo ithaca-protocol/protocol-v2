@@ -77,5 +77,5 @@ interface ILendingPoolCollateralManager {
     address debtAsset,
     uint256 maxCollateralToLiquidate,
     address receiver
-  ) external returns (uint256, string memory);
+  ) external returns (uint256, uint256, string memory);
 }

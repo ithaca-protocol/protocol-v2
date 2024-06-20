@@ -462,7 +462,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address collateralAsset,
     address debtAsset,
     uint256 maxCollateralToLiquidate
-  ) external override {
+  ) external override returns (uint256) {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
     address receiver = _addressesProvider.getReceiverAccount();
 
@@ -481,9 +481,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
+    (uint256 liquidatedCollateral, uint256 returnCode, string memory returnMessage) = abi.decode(
+      result,
+      (uint256, uint256, string)
+    );
 
     require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+    return liquidatedCollateral;
   }
 
   struct FlashLoanLocalVars {
