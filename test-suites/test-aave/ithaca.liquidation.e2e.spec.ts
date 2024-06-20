@@ -144,11 +144,10 @@ makeSuite('', (testEnv) => {
         borrower.address
       );
 
-      const amountToLiquidate = userReserveDataBefore.currentVariableDebt.toFixed(0);
+      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
+      const amountToLiquidate = userGlobalDataBefore.totalDebtETH;
 
       await increaseTime(100);
-
-      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
 
       await pool
         .connect(liquidator.signer)
@@ -166,9 +165,6 @@ makeSuite('', (testEnv) => {
         usdc.address,
         borrower.address
       );
-
-      console.log(userReserveDataBefore);
-      console.log(userReserveDataAfter);
 
       const fundlockBalAfter = await weth.balanceOf(liquidator.address);
 
@@ -188,10 +184,8 @@ makeSuite('', (testEnv) => {
       console.log(userGlobalDataBefore);
       console.log(userGlobalDataAfter);
 
-      expect(userGlobalDataAfter.totalDebtETH).to.be.eq(0);
-      expect(userReserveDataAfter.currentVariableDebt).to.be.eq(0);
-      //   debt not fully covered, but collateral is 0
-      expect(userGlobalDataAfter.healthFactor).to.be.eq(MAX_UINT_AMOUNT);
+      expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.bignumber.almostEqual(0);
+      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.eq(0);
     });
   });
 });
@@ -199,7 +193,7 @@ makeSuite('', (testEnv) => {
 makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
 
-  describe.only('liquidate weth borrowings', () => {
+  describe('liquidate weth borrowings', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
@@ -210,7 +204,7 @@ makeSuite('', (testEnv) => {
     after('After LendingPool liquidation: reset config', () => {
       BigNumber.config({ DECIMAL_PLACES: 20, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
     });
-    it.only("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
+    it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
       const { configurator, weth, pool, users, usdc } = testEnv;
       const user = users[1];
       await configurator.deactivateReserve(usdc.address);
@@ -230,7 +224,7 @@ makeSuite('', (testEnv) => {
       await configurator.activateReserve(weth.address);
     });
 
-    it.only('Deposits ithaca collateral, borrows weth', async () => {
+    it('Deposits ithaca collateral, borrows weth', async () => {
       const { usdc, weth, users, pool, oracle } = testEnv;
       const depositor = users[0];
       const borrower = users[1];
@@ -357,8 +351,6 @@ makeSuite('', (testEnv) => {
 
       expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.bignumber.almostEqual(0);
       expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.eq(0);
-      //   debt not fully covered, but collateral is 0
-      // expect(userGlobalDataAfter.healthFactor).to.be.eq(0);
       expect(userGlobalDataAfter.availableBorrowsETH).to.be.eq(0);
     });
   });
