@@ -80,10 +80,13 @@ contract LendingPoolCollateralManager is
     uint256 debtToCover,
     address collateralAsset,
     address debtAsset,
-    uint256 maxCollateralToLiquidate,
-    address receiver
+    uint256 maxCollateralToLiquidate
   ) external override returns (uint256, uint256, string memory) {
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
+    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
+    DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
+
+    require(collateralReserve.id != 0, 'COLLATERAL NOT SUPPORTED');
 
     LiquidationCallLocalVars memory vars;
 
@@ -98,8 +101,6 @@ contract LendingPoolCollateralManager is
         _addressesProvider.getIthacaFeedOracle()
       )
     );
-
-    DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
@@ -116,7 +117,9 @@ contract LendingPoolCollateralManager is
       return (0, vars.errorCode, vars.errorMsg);
     }
 
-    vars.actualDebtToLiquidate = debtToCover;
+    vars.actualDebtToLiquidate = debtToCover > vars.userStableDebt.add(vars.userVariableDebt)
+      ? vars.userStableDebt.add(vars.userVariableDebt)
+      : debtToCover;
 
     CollateralData memory collateralVars;
 
@@ -173,10 +176,12 @@ contract LendingPoolCollateralManager is
       );
     }
 
-    debtReserve.updateInterestRates(
-      debtAsset,
-      debtReserve.aTokenAddress,
-      vars.actualDebtToLiquidate,
+    collateralReserve.updateState();
+
+    collateralReserve.updateInterestRates(
+      collateralAsset,
+      collateralReserve.aTokenAddress,
+      vars.maxCollateralToLiquidate,
       0
     );
 
@@ -187,7 +192,11 @@ contract LendingPoolCollateralManager is
 
     // transfer collateral to liquidator
     // fundlock will initiate this, it will be transfered to a default address
-    IERC20(collateralAsset).transferFrom(msg.sender, receiver, vars.maxCollateralToLiquidate);
+    IERC20(collateralAsset).safeTransferFrom(
+      msg.sender,
+      collateralReserve.aTokenAddress,
+      vars.maxCollateralToLiquidate
+    );
 
     emit LiquidateIthacaCollateral(
       collateralAsset,
@@ -195,8 +204,7 @@ contract LendingPoolCollateralManager is
       user,
       vars.actualDebtToLiquidate,
       vars.maxCollateralToLiquidate,
-      msg.sender,
-      receiver
+      msg.sender
     );
 
     return (

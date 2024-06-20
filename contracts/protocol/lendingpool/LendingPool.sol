@@ -464,18 +464,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     uint256 maxCollateralToLiquidate
   ) external override returns (uint256) {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
-    address receiver = _addressesProvider.getReceiverAccount();
 
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidateIthacaCollateral(address,uint256,address,address,uint256,address)',
+        'liquidateIthacaCollateral(address,uint256,address,address,uint256)',
         user,
         debtToCover,
         collateralAsset,
         debtAsset,
-        maxCollateralToLiquidate,
-        receiver
+        maxCollateralToLiquidate
       )
     );
 

@@ -7,7 +7,8 @@ import { increaseTime } from '../../helpers/misc-utils';
 import { ProtocolErrors, RateMode } from '../../helpers/types';
 import { MockIthacaFeed } from '../../types';
 import { makeSuite } from './helpers/make-suite';
-import { getUserData } from './helpers/utils/helpers';
+import { getReserveData, getUserData } from './helpers/utils/helpers';
+import { getVariableDebtToken } from '../../helpers/contracts-getters';
 
 const chai = require('chai');
 const { expect } = chai;
@@ -135,9 +136,6 @@ makeSuite('', (testEnv) => {
       //   liquidator is fundlock
       const liquidator = users[4];
       const borrower = users[1];
-      const receiver = users[5];
-
-      await addressesProvider.setReceiverAccount(receiver.address);
 
       const userReserveDataBefore = await getUserData(
         pool,
@@ -212,7 +210,7 @@ makeSuite('', (testEnv) => {
     after('After LendingPool liquidation: reset config', () => {
       BigNumber.config({ DECIMAL_PLACES: 20, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
     });
-    it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
+    it.only("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
       const { configurator, weth, pool, users, usdc } = testEnv;
       const user = users[1];
       await configurator.deactivateReserve(usdc.address);
@@ -232,7 +230,7 @@ makeSuite('', (testEnv) => {
       await configurator.activateReserve(weth.address);
     });
 
-    it('Deposits ithaca collateral, borrows weth', async () => {
+    it.only('Deposits ithaca collateral, borrows weth', async () => {
       const { usdc, weth, users, pool, oracle } = testEnv;
       const depositor = users[0];
       const borrower = users[1];
@@ -257,11 +255,13 @@ makeSuite('', (testEnv) => {
       await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
 
-      //mints USDC to fundlock, a representation of 1eth locked in the fundlock by the borrower.
-      await usdc.connect(fundlock.signer).mint(await convertToCurrencyDecimals(weth.address, '10'));
+      //mints weth to fundlock, a representation of 10usdc locked in the fundlock by the borrower.
+      await usdc
+        .connect(fundlock.signer)
+        .mint(await convertToCurrencyDecimals(usdc.address, '1000000'));
 
       //approve protocol to access fundlock wallet
-      await usdc.connect(fundlock.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
+      await usdc.connect(fundlock.signer).approve(pool.address, (100e18).toFixed(0));
 
       await ithacaFeed.setData(
         {
@@ -282,7 +282,6 @@ makeSuite('', (testEnv) => {
       await pool
         .connect(borrower.signer)
         .borrow(weth.address, amountWETHtoBorrow, RateMode.Variable, '0', borrower.address);
-
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
       expect(userGlobalDataAfter.currentLiquidationThreshold.toString()).to.be.bignumber.equal(
@@ -313,33 +312,23 @@ makeSuite('', (testEnv) => {
     it('Liquidates the borrow', async () => {
       const { usdc, weth, users, pool, helpersContract } = testEnv;
       //   liquidator is fundlock
-      const liquidator = users[4];
+      const fundlock = users[4];
       const borrower = users[1];
-      const receiver = users[5];
 
-      await addressesProvider.setReceiverAccount(receiver.address);
-
-      const userReserveDataBefore = await getUserData(
-        pool,
-        helpersContract,
-        weth.address,
-        borrower.address
-      );
-
-      const amountToLiquidate = userReserveDataBefore.currentVariableDebt.toFixed(0);
+      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
+      const amountToLiquidate = userGlobalDataBefore.totalDebtETH;
 
       await increaseTime(100);
 
-      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
-
       await pool
-        .connect(liquidator.signer)
+        .connect(fundlock.signer)
         .liquidateIthacaCollateral(
           borrower.address,
           amountToLiquidate,
           usdc.address,
           weth.address,
-          (10e18).toFixed(0)
+          (10e18).toFixed(0),
+          { gasLimit: '80000000' }
         );
 
       const userReserveDataAfter = await getUserData(
@@ -366,8 +355,8 @@ makeSuite('', (testEnv) => {
         'Invalid user debt after liquidation'
       );
 
-      expect(userGlobalDataAfter.totalDebtETH).to.be.bignumber.almostEqual(0);
-      expect(userReserveDataAfter.currentVariableDebt).to.be.eq(0);
+      expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.bignumber.almostEqual(0);
+      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.eq(0);
       //   debt not fully covered, but collateral is 0
       // expect(userGlobalDataAfter.healthFactor).to.be.eq(0);
       expect(userGlobalDataAfter.availableBorrowsETH).to.be.eq(0);

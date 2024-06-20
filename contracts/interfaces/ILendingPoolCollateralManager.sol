@@ -33,8 +33,7 @@ interface ILendingPoolCollateralManager {
     address indexed user,
     uint256 debtToCover,
     uint256 liquidatedCollateralAmount,
-    address liquidator,
-    address receiver
+    address liquidator
   );
 
   /**
@@ -50,8 +49,6 @@ interface ILendingPoolCollateralManager {
    * @param user The address of the user
    **/
   event ReserveUsedAsCollateralEnabled(address indexed reserve, address indexed user);
-
-  event ReceiverChanged(address account);
 
   /**
    * @dev Users can invoke this function to liquidate an undercollateralized position.
@@ -75,7 +72,6 @@ interface ILendingPoolCollateralManager {
     uint256 debtToCover,
     address collateralAsset,
     address debtAsset,
-    uint256 maxCollateralToLiquidate,
-    address receiver
+    uint256 maxCollateralToLiquidate
   ) external returns (uint256, uint256, string memory);
 }

@@ -28,7 +28,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
   bytes32 private constant PRICE_ORACLE = 'PRICE_ORACLE';
   bytes32 private constant LENDING_RATE_ORACLE = 'LENDING_RATE_ORACLE';
   bytes32 private constant ITHACA_FEED_ORACLE = 'ITHACA_FEED_ORACLE';
-  bytes32 private constant ITHACA_RECEIVER_ACCOUNT = 'ITHACA_RECEIVER_ACCOUNT';
 
   constructor(string memory marketId) public {
     _setMarketId(marketId);
@@ -185,15 +184,6 @@ contract LendingPoolAddressesProvider is Ownable, ILendingPoolAddressesProvider 
 
   function getIthacaFeedOracle() external view override returns (address) {
     return getAddress(ITHACA_FEED_ORACLE);
-  }
-
-  function getReceiverAccount() external view override returns (address) {
-    return getAddress(ITHACA_RECEIVER_ACCOUNT);
-  }
-
-  function setReceiverAccount(address receiver) external override onlyOwner {
-    _addresses[ITHACA_RECEIVER_ACCOUNT] = receiver;
-    emit ReceiverUpdated(receiver);
   }
 
   function setIthacaFeedOracle(address ithacaFeed) external override onlyOwner {
