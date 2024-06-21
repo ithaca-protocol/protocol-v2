@@ -104,7 +104,7 @@ library Errors {
   string public constant SDT_STABLE_DEBT_OVERFLOW = '79';
   string public constant SDT_BURN_EXCEEDS_BALANCE = '80';
   string public constant LPCM_ITHACA_NOT_DEBT_COLLATERAL = '81';
-  string public constant LPCM_RESERVE_NOT_ITHACA_COLLATERAL = '82';
+  string public constant LPCM_ITHACA_RESERVE_PROHIBITED = '82'; //  ithaca reserve prohibited
   string public constant LPCM_SENDER_NOT_RECEIVER = '83';
   string public constant FL_NOT_ENOUGH_ALLOWANCE = '84';
 

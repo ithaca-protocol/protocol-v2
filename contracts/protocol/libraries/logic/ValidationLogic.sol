@@ -40,6 +40,7 @@ library ValidationLogic {
    * @param amount The amount to be deposited
    */
   function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) external view {
+    _requireNotIthacaReserve(reserve);
     (bool isActive, bool isFrozen, , ) = reserve.configuration.getFlags();
 
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
@@ -67,6 +68,7 @@ library ValidationLogic {
     uint256 reservesCount,
     GenericLogic.Feeds memory feeds
   ) external view {
+    _requireNotIthacaReserve(reservesData[reserveAddress]);
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
     require(amount <= userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
 
@@ -86,6 +88,10 @@ library ValidationLogic {
       ),
       Errors.VL_TRANSFER_NOT_ALLOWED
     );
+  }
+
+  function _requireNotIthacaReserve(DataTypes.ReserveData storage reserve) internal view {
+    require(reserve.id != 0, Errors.LPCM_ITHACA_RESERVE_PROHIBITED);
   }
 
   struct ValidateBorrowLocalVars {
