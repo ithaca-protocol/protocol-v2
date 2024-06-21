@@ -22,7 +22,7 @@ contract MockUniswapV2Router02 is IUniswapV2Router02 {
 
   function swapExactTokensForTokens(
     uint256 amountIn,
-    uint256, /* amountOutMin */
+    uint256 /* amountOutMin */,
     address[] calldata path,
     address to,
     uint256 /* deadline */
@@ -39,7 +39,7 @@ contract MockUniswapV2Router02 is IUniswapV2Router02 {
 
   function swapTokensForExactTokens(
     uint256 amountOut,
-    uint256, /* amountInMax */
+    uint256 /* amountInMax */,
     address[] calldata path,
     address to,
     uint256 /* deadline */
@@ -76,12 +76,10 @@ contract MockUniswapV2Router02 is IUniswapV2Router02 {
     defaultMockValue = value;
   }
 
-  function getAmountsOut(uint256 amountIn, address[] calldata path)
-    external
-    view
-    override
-    returns (uint256[] memory)
-  {
+  function getAmountsOut(
+    uint256 amountIn,
+    address[] calldata path
+  ) external view override returns (uint256[] memory) {
     uint256[] memory amounts = new uint256[](path.length);
     amounts[0] = amountIn;
     amounts[1] = _amountsOut[path[0]][path[1]][amountIn] > 0
@@ -90,12 +88,10 @@ contract MockUniswapV2Router02 is IUniswapV2Router02 {
     return amounts;
   }
 
-  function getAmountsIn(uint256 amountOut, address[] calldata path)
-    external
-    view
-    override
-    returns (uint256[] memory)
-  {
+  function getAmountsIn(
+    uint256 amountOut,
+    address[] calldata path
+  ) external view override returns (uint256[] memory) {
     uint256[] memory amounts = new uint256[](path.length);
     amounts[0] = _amountsIn[path[0]][path[1]][amountOut] > 0
       ? _amountsIn[path[0]][path[1]][amountOut]
