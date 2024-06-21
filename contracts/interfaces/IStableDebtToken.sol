@@ -99,15 +99,7 @@ interface IStableDebtToken is IInitializableDebtToken {
   /**
    * @dev Returns the principal, the total supply and the average stable rate
    **/
-  function getSupplyData()
-    external
-    view
-    returns (
-      uint256,
-      uint256,
-      uint256,
-      uint40
-    );
+  function getSupplyData() external view returns (uint256, uint256, uint256, uint40);
 
   /**
    * @dev Returns the timestamp of the last update of the total supply
