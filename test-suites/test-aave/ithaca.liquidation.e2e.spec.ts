@@ -510,7 +510,7 @@ makeSuite('', (testEnv) => {
 makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
 
-  describe.only('should not liquidate more than maxCollateralToLiquidate', () => {
+  describe('should not liquidate more than maxCollateralToLiquidate', () => {
     let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
