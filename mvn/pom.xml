@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>finance.ithaca</groupId>
+    <artifactId>ithaca-protocol-v2-abi</artifactId>
+    <version>0.0.1</version>
+
+    <name>Ithaca Protocol V2 ABI</name>
+    <description>Ithaca Protocol V2 ABI json files</description>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>../artifacts</directory>
+                <includes>
+                    <include>contracts/**/*.json</include>
+                </includes>
+                <excludes>
+                    <exclude>contracts/**/*.dbg.json</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Maven Packages</name>
+            <url>https://maven.pkg.github.com/ithaca-protocol/protocol-v2</url>
+        </repository>
+    </distributionManagement>
+</project>
