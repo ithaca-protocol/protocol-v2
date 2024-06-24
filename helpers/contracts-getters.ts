@@ -136,14 +136,6 @@ export const getInterestRateStrategy = async (address?: tEthereumAddress) =>
     await getFirstSigner()
   );
 
-export const getMockFlashLoanReceiver = async (address?: tEthereumAddress) =>
-  await MockFlashLoanReceiverFactory.connect(
-    address ||
-      (
-        await getDb().get(`${eContractid.MockFlashLoanReceiver}.${DRE.network.name}`).value()
-      ).address,
-    await getFirstSigner()
-  );
 
 export const getLendingRateOracle = async (address?: tEthereumAddress) =>
   await LendingRateOracleFactory.connect(

@@ -33,24 +33,16 @@ import {
   MintableERC20Factory,
   MockAggregatorFactory,
   MockATokenFactory,
-  MockFlashLoanReceiverFactory,
-  MockParaSwapAugustusFactory,
-  MockParaSwapAugustusRegistryFactory,
   MockStableDebtTokenFactory,
   MockVariableDebtTokenFactory,
-  MockUniswapV2Router02Factory,
-  ParaSwapLiquiditySwapAdapterFactory,
   PriceOracleFactory,
   ReserveLogicFactory,
   SelfdestructTransferFactory,
   StableDebtTokenFactory,
-  UniswapLiquiditySwapAdapterFactory,
-  UniswapRepayAdapterFactory,
   VariableDebtTokenFactory,
   WalletBalanceProviderFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
-  FlashLiquidationAdapterFactory,
   UiPoolDataProviderV2Factory,
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
@@ -310,17 +302,6 @@ export const deployInitializableAdminUpgradeabilityProxy = async (verify?: boole
     await new InitializableAdminUpgradeabilityProxyFactory(await getFirstSigner()).deploy(),
     eContractid.InitializableAdminUpgradeabilityProxy,
     [],
-    verify
-  );
-
-export const deployMockFlashLoanReceiver = async (
-  addressesProvider: tEthereumAddress,
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new MockFlashLoanReceiverFactory(await getFirstSigner()).deploy(addressesProvider),
-    eContractid.MockFlashLoanReceiver,
-    [addressesProvider],
     verify
   );
 

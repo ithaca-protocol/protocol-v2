@@ -14,7 +14,6 @@ import {
   deployLendingPool,
   deployPriceOracle,
   deployLendingPoolCollateralManager,
-  deployMockFlashLoanReceiver,
   deployWalletBalancerProvider,
   deployAaveProtocolDataProvider,
   deployLendingRateOracle,
@@ -278,7 +277,6 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await waitForTx(
     await addressesProvider.setLendingPoolCollateralManager(collateralManager.address)
   );
-  await deployMockFlashLoanReceiver(addressesProvider.address);
 
   await deployMockIthacaFeed();
 
