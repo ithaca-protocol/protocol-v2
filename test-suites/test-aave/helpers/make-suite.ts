@@ -168,12 +168,6 @@ export async function initializeMakeSuite() {
   testEnv.wethGateway = await getWETHGateway();
 
   testEnv.ithacaFeed = await getIthacaFeed();
-
-  testEnv.uniswapLiquiditySwapAdapter = await getUniswapLiquiditySwapAdapter();
-  testEnv.uniswapRepayAdapter = await getUniswapRepayAdapter();
-  testEnv.flashLiquidationAdapter = await getFlashLiquidationAdapter();
-
-  testEnv.paraswapLiquiditySwapAdapter = await getParaSwapLiquiditySwapAdapter();
 }
 
 const setSnapshot = async () => {
