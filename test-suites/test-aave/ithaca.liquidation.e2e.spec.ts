@@ -1,17 +1,119 @@
 import BigNumber from 'bignumber.js';
 
 import { parseEther } from 'ethers/lib/utils';
-import { APPROVAL_AMOUNT_LENDING_POOL, MAX_UINT_AMOUNT, oneEther } from '../../helpers/constants';
+import { APPROVAL_AMOUNT_LENDING_POOL, oneEther } from '../../helpers/constants';
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { increaseTime } from '../../helpers/misc-utils';
 import { ProtocolErrors, RateMode } from '../../helpers/types';
 import { MockIthacaFeed } from '../../types';
 import { makeSuite } from './helpers/make-suite';
-import { getReserveData, getUserData } from './helpers/utils/helpers';
-import { getVariableDebtToken } from '../../helpers/contracts-getters';
+import { getUserData } from './helpers/utils/helpers';
 
 const chai = require('chai');
 const { expect } = chai;
+makeSuite('', (testEnv) => {
+  const { INVALID_HF } = ProtocolErrors;
+
+  describe.only('test calculateUserData for reserves', () => {
+    let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
+    before('Before LendingPool liquidation: set config', async () => {
+      BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
+      ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
+      await addressesProvider.setIthacaFeedOracle(ithacaFeed.address);
+    });
+
+    after('After LendingPool liquidation: reset config', () => {
+      BigNumber.config({ DECIMAL_PLACES: 20, ROUNDING_MODE: BigNumber.ROUND_HALF_UP });
+    });
+
+    it('Deposits ithaca collateral', async () => {
+      const { weth, users, pool } = testEnv;
+      const borrower = users[1];
+
+      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
+      const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
+
+      await ithacaFeed.setData(
+        {
+          maintenanceMargin: 0,
+          mtm: 0,
+          collateral: amountETHtoDeposit,
+          valueAtRisk: 0,
+        },
+        1
+      );
+
+      const userGlobalData = await pool.getUserAccountData(borrower.address);
+
+      expect(userGlobalData.totalCollateralETH).to.be.eq(
+        amountETHtoDeposit,
+        'should return ithaca collateral'
+      );
+    });
+
+    it('Deposits usdc', async () => {
+      const { weth, users, pool, usdc, oracle } = testEnv;
+      const borrower = users[1];
+
+      const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1');
+
+      //mints USDC to user
+      await usdc.connect(borrower.signer).mint(amountUSDCtoDeposit);
+
+      //approve protocol to access borrower wallet
+      await usdc.connect(borrower.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
+
+      const usdcPrice = await oracle.getAssetPrice(usdc.address);
+
+      const usdcDepositsInETH = usdcPrice.mul(amountUSDCtoDeposit).div(1e6);
+
+      await pool
+        .connect(borrower.signer)
+        .deposit(usdc.address, amountUSDCtoDeposit, borrower.address, '0');
+
+      const depositedIthacaCollateral = await convertToCurrencyDecimals(weth.address, '1');
+
+      const userGlobalData = await pool.getUserAccountData(borrower.address);
+
+      expect(userGlobalData.totalCollateralETH).to.be.eq(
+        depositedIthacaCollateral.add(usdcDepositsInETH),
+        'should return ithaca collateral + usdc deposits'
+      );
+    });
+
+    it('Deposits weth', async () => {
+      const { weth, users, pool, usdc } = testEnv;
+      const borrower = users[1];
+
+      const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1');
+
+      const usdcPrice = await oracle.getAssetPrice(usdc.address);
+
+      const usdcDepositsInETH = usdcPrice.mul(amountUSDCtoDeposit).div(1e6);
+
+      const amountWETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
+
+      //mints weth to user
+      await weth.connect(borrower.signer).mint(amountWETHtoDeposit);
+
+      //approve protocol to access borrower wallet
+      await weth.connect(borrower.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
+
+      await pool
+        .connect(borrower.signer)
+        .deposit(weth.address, amountWETHtoDeposit, borrower.address, '0');
+
+      const depositedIthacaCollateral = await convertToCurrencyDecimals(weth.address, '1');
+
+      const userGlobalData = await pool.getUserAccountData(borrower.address);
+
+      expect(userGlobalData.totalCollateralETH).to.be.eq(
+        depositedIthacaCollateral.add(usdcDepositsInETH).add(amountWETHtoDeposit),
+        'should return ithaca collateral + usdc deposits + weth deposits'
+      );
+    });
+  });
+});
 
 makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
