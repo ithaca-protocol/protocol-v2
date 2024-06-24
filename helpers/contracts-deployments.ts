@@ -55,6 +55,7 @@ import {
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
+  CustomReserveInterestRateStrategyFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -373,6 +374,19 @@ export const deployDefaultReserveInterestRateStrategy = async (
     args,
     verify
   );
+
+export const deployCustomReserveInterestRateStrategy = async (
+  args: [tEthereumAddress, string, string, string, string, tEthereumAddress],
+  verify: boolean
+) =>
+  withSaveAndVerify(
+    await new CustomReserveInterestRateStrategyFactory(await getFirstSigner()).deploy(...args),
+    eContractid.CustomInterestRateStrategy,
+    args,
+    verify
+  );
+
+
 
 export const deployStableDebtToken = async (
   args: [tEthereumAddress, tEthereumAddress, tEthereumAddress, string, string],

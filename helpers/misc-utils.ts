@@ -29,6 +29,8 @@ export const sleep = (milliseconds: number) => {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 };
 
+export const getSigners = async () => await DRE.ethers.getSigners();
+
 export const createRandomAddress = () => Wallet.createRandom().address;
 
 export const evmSnapshot = async () => await DRE.ethers.provider.send('evm_snapshot', []);
