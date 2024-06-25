@@ -45,6 +45,12 @@ library DataTypes {
     uint256 data;
   }
 
+  struct IthacaCollateralParams {
+    uint256 ltv;
+    uint256 liquidationThreshold;
+    uint256 liquidationBonus;
+  }
+
   enum InterestRateMode {
     NONE,
     STABLE,

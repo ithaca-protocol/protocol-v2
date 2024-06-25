@@ -51,14 +51,6 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
 
     expect(userGlobalData.healthFactor).to.be.equal(MAX_UINT_AMOUNT);
 
-    let isUsingIthacaAsCollateral = await pool.isUsingIthacaCollateral();
-    expect(isUsingIthacaAsCollateral).to.be.equal(false);
-
-    await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
-
-    isUsingIthacaAsCollateral = await pool.connect(borrower.signer).isUsingIthacaCollateral();
-    expect(isUsingIthacaAsCollateral).to.be.equal(true);
-
     userGlobalData = await pool.connect(borrower.signer).getUserAccountData(borrower.address);
     expect(userGlobalData.healthFactor).to.be.equal(MAX_UINT_AMOUNT);
 
@@ -105,7 +97,7 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
     expect(userGlobalDataAfter.totalCollateralETH).to.be.equal((1e18).toFixed(0));
     // expect(userGlobalDataAfter.availableBorrowsETH).to.be.equal(0);
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
-    await resetIthacaFeed(borrower.address);
+    await resetIthacaFeed();
   });
 
   it('Deposits IthacaCollateral and 3 weth has negative margin requirement, borrows USDC', async () => {
@@ -142,14 +134,6 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
     let userGlobalData = await pool.getUserAccountData(borrower.address);
 
     expect(userGlobalData.healthFactor).to.be.equal(MAX_UINT_AMOUNT);
-
-    let isUsingIthacaAsCollateral = await pool.isUsingIthacaCollateral();
-    expect(isUsingIthacaAsCollateral).to.be.equal(false);
-
-    await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
-
-    isUsingIthacaAsCollateral = await pool.connect(borrower.signer).isUsingIthacaCollateral();
-    expect(isUsingIthacaAsCollateral).to.be.equal(true);
 
     userGlobalData = await pool.connect(borrower.signer).getUserAccountData(borrower.address);
     expect(userGlobalData.healthFactor).to.be.equal(MAX_UINT_AMOUNT);
@@ -198,7 +182,7 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
     expect(userGlobalDataAfter.healthFactor).to.be.gt((1e18).toFixed(0));
   });
 
-  async function resetIthacaFeed(client) {
+  async function resetIthacaFeed() {
     await ithacaFeed.setData(
       {
         maintenanceMargin: 0,

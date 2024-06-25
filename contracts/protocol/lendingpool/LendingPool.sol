@@ -164,10 +164,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
-      )
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      ),
+      _ithacaCollateralParams
     );
 
     reserve.updateState();
@@ -402,10 +406,14 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
-      )
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      ),
+      _ithacaCollateralParams
     );
 
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -440,7 +448,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidationCall(address,address,address,uint256,bool)',
+        "liquidationCall(address,address,address,uint256,bool)",
         collateralAsset,
         debtAsset,
         user,
@@ -468,12 +476,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidateIthacaCollateral(address,uint256,address,address,uint256)',
+        "liquidateIthacaCollateral(address,uint256,address,address,uint256,uint256)",
         user,
         debtToCover,
         collateralAsset,
         debtAsset,
-        maxCollateralToLiquidate
+        maxCollateralToLiquidate,
+        _ithacaCollateralParams.liquidationBonus
       )
     );
 
@@ -648,9 +657,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[user],
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
       )
     );
 
@@ -778,9 +790,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[from],
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
       )
     );
 
@@ -854,14 +869,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     _reserves[asset].configuration.data = configuration;
   }
 
-  function setUsingIthacaCollateral(bool isUsingAsCollateral) public {
-    _usersConfig[msg.sender].setUsingAsCollateral(0, isUsingAsCollateral);
-  }
-
-  function isUsingIthacaCollateral() public view returns (bool) {
-    return _usersConfig[msg.sender].isUsingAsCollateral(0);
-  }
-
   /**
    * @dev Set the _pause state of a reserve
    * - Only callable by the LendingPoolConfigurator contract
@@ -874,6 +881,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     } else {
       emit Unpaused();
     }
+  }
+
+  function setIthacaCollateralParams(DataTypes.IthacaCollateralParams memory params) external {
+    _ithacaCollateralParams = params;
   }
 
   struct ExecuteBorrowParams {
@@ -912,7 +923,13 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       userConfig,
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(oracle, ithacaFeed)
+      GenericLogic.Params(
+        oracle,
+        ithacaFeed,
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      )
     );
 
     reserve.updateState();

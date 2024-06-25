@@ -85,7 +85,6 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
         pool.liquidationCall(weth.address, dai.address, borrower.address, 1, true)
       ).to.be.revertedWith(LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD);
 
-      expect(await pool.isUsingIthacaCollateral()).to.be.equal(false);
     });
 
     it('Drop the health factor below 1', async () => {
@@ -196,7 +195,6 @@ makeSuite('LendingPool liquidation - liquidator receiving aToken', (testEnv) => 
         return;
       }
 
-      expect(await pool.isUsingIthacaCollateral()).to.be.equal(false);
 
       const txTimestamp = new BigNumber(
         (await DRE.ethers.provider.getBlock(tx.blockNumber)).timestamp

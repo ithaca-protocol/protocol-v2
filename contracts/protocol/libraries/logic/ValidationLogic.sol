@@ -66,7 +66,8 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Feeds memory feeds
+    GenericLogic.Params memory params,
+    DataTypes.IthacaCollateralParams memory ithacaCollateralParams
   ) external view {
     _requireNotIthacaReserve(reservesData[reserveAddress]);
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
@@ -84,7 +85,7 @@ library ValidationLogic {
         userConfig,
         reserves,
         reservesCount,
-        feeds
+        params
       ),
       Errors.VL_TRANSFER_NOT_ALLOWED
     );
@@ -138,7 +139,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Feeds memory feeds
+    GenericLogic.Params memory ithacaParams 
   ) external view {
     ValidateBorrowLocalVars memory vars;
 
@@ -171,7 +172,7 @@ library ValidationLogic {
       userConfig,
       reserves,
       reservesCount,
-      feeds
+      ithacaParams
     );
 
     require(vars.userCollateralBalanceETH > 0, Errors.VL_COLLATERAL_BALANCE_IS_0);
@@ -363,7 +364,8 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Feeds memory feeds
+    GenericLogic.Params memory params,
+    DataTypes.IthacaCollateralParams memory ithacaCollateralParams
   ) external view {
     uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
 
@@ -379,7 +381,7 @@ library ValidationLogic {
           userConfig,
           reserves,
           reservesCount,
-          feeds
+          params
         ),
       Errors.VL_DEPOSIT_ALREADY_IN_USE
     );
@@ -461,7 +463,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Feeds memory feeds
+    GenericLogic.Params memory params
   ) internal view {
     (, , , , uint256 healthFactor) = GenericLogic.calculateUserAccountData(
       from,
@@ -469,7 +471,7 @@ library ValidationLogic {
       userConfig,
       reserves,
       reservesCount,
-      feeds
+      params
     );
 
     require(

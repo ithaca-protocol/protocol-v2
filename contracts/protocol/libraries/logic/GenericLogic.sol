@@ -60,7 +60,7 @@ library GenericLogic {
     DataTypes.UserConfigurationMap calldata userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    Feeds memory feeds
+    Params memory params
   ) external view returns (bool) {
     if (!userConfig.isBorrowingAny() || !userConfig.isUsingAsCollateral(reservesData[asset].id)) {
       return true;
@@ -82,13 +82,13 @@ library GenericLogic {
       ,
       vars.avgLiquidationThreshold,
 
-    ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, feeds);
+    ) = calculateUserAccountData(user, reservesData, userConfig, reserves, reservesCount, params);
 
     if (vars.totalDebtInETH == 0) {
       return true;
     }
 
-    vars.amountToDecreaseInETH = IPriceOracleGetter(feeds.oracle)
+    vars.amountToDecreaseInETH = IPriceOracleGetter(params.oracle)
       .getAssetPrice(asset)
       .mul(amount)
       .div(10 ** vars.decimals);
@@ -136,9 +136,12 @@ library GenericLogic {
     bool userUsesReserveAsCollateral;
   }
 
-  struct Feeds {
+  struct Params {
     address oracle;
     address ithacafeed;
+    uint256 ltv;
+    uint256 liquidationBonus;
+    uint256 liquidationThreshold;
   }
 
   /**
@@ -157,15 +160,14 @@ library GenericLogic {
     DataTypes.UserConfigurationMap memory userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    Feeds memory feeds
+    Params memory params
   ) internal view returns (uint256, uint256, uint256, uint256, uint256) {
     CalculateUserAccountDataVars memory vars;
 
-    if (userConfig.isEmpty()) {
-      return (0, 0, 0, 0, uint256(-1));
-    }
-
-    for (vars.i = reservesCount - 1; vars.i < reservesCount; vars.i--) {
+    // if (userConfig.isEmpty()) {
+    //   return (0, 0, 0, 0, uint256(-1));
+    // }
+    for (vars.i = 0; vars.i < reservesCount; vars.i++) {
       if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
         continue;
       }
@@ -178,33 +180,27 @@ library GenericLogic {
         .getParams();
 
       vars.tokenUnit = 10 ** vars.decimals;
-      vars.reserveUnitPrice = IPriceOracleGetter(feeds.oracle).getAssetPrice(
+      vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(
         vars.currentReserveAddress
       );
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);
 
-        uint256 liquidityBalanceETH;
+        uint256 liquidityBalanceETH = vars
+          .reserveUnitPrice
+          .mul(vars.compoundedLiquidityBalance)
+          .div(vars.tokenUnit);
 
-        if (vars.i == 0) {
-          liquidityBalanceETH = _getIthacaCollateral(user, vars, feeds.ithacafeed);
-        } else {
-          liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(
-            vars.tokenUnit
-          );
-        }
+        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
 
         vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(vars.ltv));
-
         vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
           liquidityBalanceETH.mul(vars.liquidationThreshold)
         );
-
-        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
       }
 
-      if (userConfig.isBorrowing(vars.i) && vars.i != 0) {
+      if (userConfig.isBorrowing(vars.i)) {
         vars.compoundedBorrowBalance = IERC20(currentReserve.stableDebtTokenAddress).balanceOf(
           user
         );
@@ -218,8 +214,18 @@ library GenericLogic {
       }
     }
 
-    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
+    uint256 ithacaCollateral = _getIthacaCollateral(user, vars, params.ithacafeed);
 
+    // 100% ltv, liquidation threshold
+    if (ithacaCollateral > 0) {
+      vars.totalCollateralInETH = vars.totalCollateralInETH.add(ithacaCollateral);
+      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
+        ithacaCollateral.mul(params.liquidationThreshold)
+      );
+      vars.avgLtv = vars.avgLtv.add(ithacaCollateral.mul(params.ltv));
+    }
+
+    vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
     vars.avgLiquidationThreshold = vars.totalCollateralInETH > 0
       ? vars.avgLiquidationThreshold.div(vars.totalCollateralInETH)
       : 0;
@@ -229,7 +235,6 @@ library GenericLogic {
       vars.totalDebtInETH,
       vars.avgLiquidationThreshold
     );
-
     return (
       vars.totalCollateralInETH,
       vars.totalDebtInETH,
@@ -280,12 +285,13 @@ library GenericLogic {
     uint256 totalCollateralInETH,
     uint256 totalDebtInETH,
     uint256 ltv
-  ) internal view returns (uint256) {
+  ) internal pure returns (uint256) {
     uint256 availableBorrowsETH = totalCollateralInETH.percentMul(ltv);
 
     if (availableBorrowsETH < totalDebtInETH) {
       return 0;
     }
+
     availableBorrowsETH = availableBorrowsETH.sub(totalDebtInETH);
     return availableBorrowsETH;
   }

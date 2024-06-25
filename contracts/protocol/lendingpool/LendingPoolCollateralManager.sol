@@ -86,7 +86,7 @@ contract LendingPoolCollateralManager is
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
 
-    require(collateralReserve.id != 0, 'COLLATERAL NOT SUPPORTED');
+    require(collateralReserve.id != 0, "COLLATERAL NOT SUPPORTED");
 
     LiquidationCallLocalVars memory vars;
 
@@ -96,22 +96,16 @@ contract LendingPoolCollateralManager is
       userConfig,
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
       )
     );
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
-
-    (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
-      _reserves[_reservesList[0]],
-      debtReserve,
-      userConfig,
-      vars.healthFactor,
-      vars.userStableDebt,
-      vars.userVariableDebt
-    );
 
     if (Errors.CollateralManagerErrors(vars.errorCode) != Errors.CollateralManagerErrors.NO_ERROR) {
       return (0, vars.errorCode, vars.errorMsg);
@@ -125,9 +119,7 @@ contract LendingPoolCollateralManager is
 
     (, , , collateralVars.decimals, ) = _reserves[collateralAsset].configuration.getParams();
 
-    (, , collateralVars.liquidationBonus, , ) = _reserves[_reservesList[0]]
-      .configuration
-      .getParams();
+    collateralVars.liquidationBonus = _ithacaCollateralParams.liquidationBonus;
 
     IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
     collateralVars.price = oracle.getAssetPrice(collateralAsset);
@@ -136,9 +128,7 @@ contract LendingPoolCollateralManager is
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
     ) = _calculateAvailableCollateralToLiquidate(
-      _reserves[_reservesList[0]],
       debtReserve,
-      _reservesList[0],
       debtAsset,
       vars.actualDebtToLiquidate,
       maxCollateralToLiquidate,
@@ -250,9 +240,12 @@ contract LendingPoolCollateralManager is
       userConfig,
       _reservesList,
       _reservesCount,
-      GenericLogic.Feeds(
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle()
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
       )
     );
 
@@ -297,9 +290,7 @@ contract LendingPoolCollateralManager is
       vars.maxCollateralToLiquidate,
       vars.debtAmountNeeded
     ) = _calculateAvailableCollateralToLiquidate(
-      collateralReserve,
       debtReserve,
-      collateralAsset,
       debtAsset,
       vars.actualDebtToLiquidate,
       vars.userCollateralBalance,
@@ -427,9 +418,7 @@ contract LendingPoolCollateralManager is
    * a certain amount of debt asset.
    * - This function needs to be called after all the checks to validate the liquidation have been performed,
    *   otherwise it might fail.
-   * @param collateralReserve The data of the collateral reserve
    * @param debtReserve The data of the debt reserve
-   * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
    * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param userCollateralBalance The collateral balance for the specific `collateralAsset` of the user being liquidated
@@ -438,9 +427,7 @@ contract LendingPoolCollateralManager is
    *         debtAmountNeeded: The amount to repay with the liquidation
    **/
   function _calculateAvailableCollateralToLiquidate(
-    DataTypes.ReserveData storage collateralReserve,
     DataTypes.ReserveData storage debtReserve,
-    address collateralAsset,
     address debtAsset,
     uint256 debtToCover,
     uint256 userCollateralBalance,

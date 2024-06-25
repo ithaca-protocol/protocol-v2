@@ -30,7 +30,6 @@ makeSuite('', (testEnv) => {
       const { weth, users, pool } = testEnv;
       const borrower = users[1];
 
-      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
       await ithacaFeed.setData(
@@ -172,7 +171,6 @@ makeSuite('', (testEnv) => {
         .connect(depositor.signer)
         .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
 
-      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
       //mints USDC to fundlock, a representation of 1eth locked in the fundlock by the borrower.
@@ -258,7 +256,8 @@ makeSuite('', (testEnv) => {
           amountToLiquidate,
           weth.address,
           usdc.address,
-          (2e18).toFixed(0)
+          (2e18).toFixed(0),
+          { gasLimit: '80000000' }
         );
 
       const userReserveDataAfter = await getUserData(
@@ -278,7 +277,8 @@ makeSuite('', (testEnv) => {
           collateral: fundlockBalAfter,
           valueAtRisk: 0,
         },
-        1
+        1,
+        { gasLimit: '80000000' }
       );
 
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
@@ -345,7 +345,6 @@ makeSuite('', (testEnv) => {
         .connect(depositor.signer)
         .deposit(weth.address, amountOfETHtoDeposit, depositor.address, '0');
 
-      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
 
       //mints weth to fundlock, a representation of 10usdc locked in the fundlock by the borrower.
@@ -511,7 +510,6 @@ makeSuite('', (testEnv) => {
         .connect(depositor.signer)
         .deposit(weth.address, amountOfETHtoDeposit, depositor.address, '0');
 
-      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
 
       //mints weth to fundlock, a representation of 10usdc locked in the fundlock by the borrower.
@@ -665,7 +663,6 @@ makeSuite('', (testEnv) => {
         .connect(depositor.signer)
         .deposit(weth.address, amountOfETHtoDeposit, depositor.address, '0');
 
-      await pool.connect(borrower.signer).setUsingIthacaCollateral(true);
       const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
 
       //mints weth to fundlock, a representation of 10usdc locked in the fundlock by the borrower.
