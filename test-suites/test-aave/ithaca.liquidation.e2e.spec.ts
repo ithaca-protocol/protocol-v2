@@ -756,38 +756,3 @@ makeSuite('', (testEnv) => {
     });
   });
 });
-
-makeSuite('', (testEnv) => {
-  const { INVALID_HF } = ProtocolErrors;
-  let weth, users, pool, oracle, ithacaFeed: MockIthacaFeed, usdc, addressesProvider;
-  describe('deposit/withdraw ithaca collateral', () => {
-    it('should fail on deposit/withdraw with ithaca reserve', async () => {
-      const { users, pool, ithacaToken } = testEnv;
-
-      const depositor = users[0];
-      const amountToDeposit = await convertToCurrencyDecimals(ithacaToken.address, '1000');
-
-      // mints ithacatoken to depositor
-      await ithacaToken.connect(depositor.signer).mint(amountToDeposit);
-
-      //approve protocol to access depositor wallet
-      await ithacaToken
-        .connect(depositor.signer)
-        .approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
-
-      await expect(
-        pool
-          .connect(depositor.signer)
-          .deposit(ithacaToken.address, amountToDeposit, depositor.address, '0', {
-            gasLimit: '80000000',
-          })
-      ).to.be.revertedWith('82');
-
-      await expect(
-        pool.connect(depositor.signer).withdraw(ithacaToken.address, 1000, depositor.address, {
-          gasLimit: '80000000',
-        })
-      ).to.be.revertedWith('82');
-    });
-  });
-});

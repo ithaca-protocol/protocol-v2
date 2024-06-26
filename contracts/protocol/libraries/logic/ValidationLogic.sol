@@ -40,7 +40,6 @@ library ValidationLogic {
    * @param amount The amount to be deposited
    */
   function validateDeposit(DataTypes.ReserveData storage reserve, uint256 amount) external view {
-    _requireNotIthacaReserve(reserve);
     (bool isActive, bool isFrozen, , ) = reserve.configuration.getFlags();
 
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
@@ -66,10 +65,8 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Params memory params,
-    DataTypes.IthacaCollateralParams memory ithacaCollateralParams
+    GenericLogic.Params memory params
   ) external view {
-    _requireNotIthacaReserve(reservesData[reserveAddress]);
     require(amount != 0, Errors.VL_INVALID_AMOUNT);
     require(amount <= userBalance, Errors.VL_NOT_ENOUGH_AVAILABLE_USER_BALANCE);
 
@@ -89,10 +86,6 @@ library ValidationLogic {
       ),
       Errors.VL_TRANSFER_NOT_ALLOWED
     );
-  }
-
-  function _requireNotIthacaReserve(DataTypes.ReserveData storage reserve) internal view {
-    require(reserve.id != 0, Errors.LPCM_ITHACA_RESERVE_PROHIBITED);
   }
 
   struct ValidateBorrowLocalVars {
@@ -139,7 +132,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Params memory ithacaParams 
+    GenericLogic.Params memory ithacaParams
   ) external view {
     ValidateBorrowLocalVars memory vars;
 
@@ -364,8 +357,7 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     mapping(uint256 => address) storage reserves,
     uint256 reservesCount,
-    GenericLogic.Params memory params,
-    DataTypes.IthacaCollateralParams memory ithacaCollateralParams
+    GenericLogic.Params memory params
   ) external view {
     uint256 underlyingBalance = IERC20(reserve.aTokenAddress).balanceOf(msg.sender);
 
@@ -434,6 +426,48 @@ library ValidationLogic {
 
     //if collateral isn't enabled as collateral by user, it cannot be liquidated
     if (!isCollateralEnabled) {
+      return (
+        uint256(Errors.CollateralManagerErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
+        Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED
+      );
+    }
+
+    if (userStableDebt == 0 && userVariableDebt == 0) {
+      return (
+        uint256(Errors.CollateralManagerErrors.CURRRENCY_NOT_BORROWED),
+        Errors.LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER
+      );
+    }
+
+    return (uint256(Errors.CollateralManagerErrors.NO_ERROR), Errors.LPCM_NO_ERRORS);
+  }
+
+  function validateLiquideIthacaCollateralCall(
+    DataTypes.ReserveData storage principalReserve,
+    uint256 userHealthFactor,
+    uint256 userStableDebt,
+    uint256 userVariableDebt,
+    DataTypes.IthacaCollateralParams memory params
+  ) internal view returns (uint256, string memory) {
+
+    if (!principalReserve.configuration.getActive()) {
+      return (
+        uint256(Errors.CollateralManagerErrors.NO_ACTIVE_RESERVE),
+        Errors.VL_NO_ACTIVE_RESERVE
+      );
+    }
+
+    if (userHealthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD) {
+      return (
+        uint256(Errors.CollateralManagerErrors.HEALTH_FACTOR_ABOVE_THRESHOLD),
+        Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD
+      );
+    }
+
+    bool isValidLiquidationThreshold = params.liquidationThreshold > 0;
+
+    //if collateral isn't enabled as collateral by user, it cannot be liquidated
+    if (!isValidLiquidationThreshold) {
       return (
         uint256(Errors.CollateralManagerErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
         Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED

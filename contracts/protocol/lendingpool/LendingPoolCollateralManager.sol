@@ -107,6 +107,14 @@ contract LendingPoolCollateralManager is
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
+    (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquideIthacaCollateralCall(
+      debtReserve,
+      vars.healthFactor,
+      vars.userStableDebt,
+      vars.userVariableDebt,
+      _ithacaCollateralParams
+    );
+
     if (Errors.CollateralManagerErrors(vars.errorCode) != Errors.CollateralManagerErrors.NO_ERROR) {
       return (0, vars.errorCode, vars.errorMsg);
     }

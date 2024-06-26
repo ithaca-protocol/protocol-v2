@@ -126,10 +126,6 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   const lendingPoolAddress = await addressesProvider.getLendingPool();
   const lendingPoolProxy = await getLendingPool(lendingPoolAddress);
 
-  await waitForTx(
-    await lendingPoolProxy.setIthacaCollateralParams({ltv: 10000, liquidationThreshold: 10000, liquidationBonus: 10050})
-  );
-
   await insertContractAddressInDb(eContractid.LendingPool, lendingPoolProxy.address);
 
   const lendingPoolConfiguratorImpl = await deployLendingPoolConfigurator();
@@ -140,6 +136,12 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   const lendingPoolConfiguratorProxy = await getLendingPoolConfiguratorProxy(
     await addressesProvider.getLendingPoolConfigurator()
   );
+
+  await waitForTx(
+    // ltv, threshold, bonus
+    await lendingPoolConfiguratorProxy.configureIthacaCollateral(10000, 10000, 10050)
+  );
+
   await insertContractAddressInDb(
     eContractid.LendingPoolConfigurator,
     lendingPoolConfiguratorProxy.address
@@ -305,9 +307,7 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
 
   const ithacaFeed = await deployMockIthacaFeed();
 
-  await waitForTx(
-    await addressesProvider.setIthacaFeedOracle(ithacaFeed.address)
-  );
+  await waitForTx(await addressesProvider.setIthacaFeedOracle(ithacaFeed.address));
 
   const augustus = await deployMockParaSwapAugustus();
 

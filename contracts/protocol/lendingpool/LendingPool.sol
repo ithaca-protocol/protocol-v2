@@ -170,8 +170,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _ithacaCollateralParams.ltv,
         _ithacaCollateralParams.liquidationBonus,
         _ithacaCollateralParams.liquidationThreshold
-      ),
-      _ithacaCollateralParams
+      )
     );
 
     reserve.updateState();
@@ -412,8 +411,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         _ithacaCollateralParams.ltv,
         _ithacaCollateralParams.liquidationBonus,
         _ithacaCollateralParams.liquidationThreshold
-      ),
-      _ithacaCollateralParams
+      )
     );
 
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -476,13 +474,12 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        "liquidateIthacaCollateral(address,uint256,address,address,uint256,uint256)",
+        "liquidateIthacaCollateral(address,uint256,address,address,uint256)",
         user,
         debtToCover,
         collateralAsset,
         debtAsset,
-        maxCollateralToLiquidate,
-        _ithacaCollateralParams.liquidationBonus
+        maxCollateralToLiquidate
       )
     );
 
@@ -883,7 +880,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
-  function setIthacaCollateralParams(DataTypes.IthacaCollateralParams memory params) external {
+  function configureIthacaCollateral(DataTypes.IthacaCollateralParams memory params) external override onlyLendingPoolConfigurator{
     _ithacaCollateralParams = params;
   }
 
