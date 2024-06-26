@@ -468,7 +468,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address collateralAsset,
     address debtAsset,
     uint256 maxCollateralToLiquidate
-  ) external override returns (uint256) {
+  ) external override whenNotPaused returns (uint256) {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line

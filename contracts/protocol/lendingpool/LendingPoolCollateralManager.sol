@@ -86,8 +86,6 @@ contract LendingPoolCollateralManager is
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
 
-    require(collateralReserve.id != 0, "COLLATERAL NOT SUPPORTED");
-
     LiquidationCallLocalVars memory vars;
 
     (, , , , vars.healthFactor) = GenericLogic.calculateUserAccountData(
@@ -233,12 +231,6 @@ contract LendingPoolCollateralManager is
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
-
-    // can't liquidate portfolio collateral
-    require(
-      debtReserve.id != 0 && collateralReserve.id != 0,
-      Errors.LPCM_ITHACA_NOT_DEBT_COLLATERAL
-    );
 
     LiquidationCallLocalVars memory vars;
 

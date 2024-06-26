@@ -218,7 +218,6 @@ export interface iAssetCommon<T> {
   [key: string]: T;
 }
 export interface iAssetBase<T> {
-  ITH: T;
   WETH: T;
   DAI: T;
   TUSD: T;
@@ -268,7 +267,6 @@ export type iAssetsWithoutUSD<T> = Omit<iAssetBase<T>, 'USD'>;
 
 export type iAavePoolAssets<T> = Pick<
   iAssetsWithoutUSD<T>,
-  | 'ITH'
   | 'DAI'
   | 'TUSD'
   | 'USDC'
@@ -339,7 +337,6 @@ export type iAavePoolTokens<T> = Omit<iAavePoolAssets<T>, 'ETH'>;
 export type iAssetAggregatorBase<T> = iAssetsWithoutETH<T>;
 
 export enum TokenContractId {
-  ITH = 'ITH',
   DAI = 'DAI',
   AAVE = 'AAVE',
   TUSD = 'TUSD',

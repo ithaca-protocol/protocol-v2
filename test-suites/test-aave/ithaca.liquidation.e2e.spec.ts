@@ -642,7 +642,7 @@ makeSuite('', (testEnv) => {
     });
 
     it('Deposits ithaca collateral, borrows weth', async () => {
-      const { usdc, weth, users, pool, oracle, ithacaToken } = testEnv;
+      const { usdc, weth, users, pool, oracle } = testEnv;
       const depositor = users[0];
       const borrower = users[1];
 

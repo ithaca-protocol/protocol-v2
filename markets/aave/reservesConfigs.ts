@@ -24,19 +24,6 @@ export const strategyBUSD: IReserveParams = {
   reserveFactor: '1000',
 };
 
-// ithaca
-export const strategyITH: IReserveParams = {
-  strategy: rateStrategyStableTwo,
-  baseLTVAsCollateral: '10000',
-  liquidationThreshold: '10000',
-  liquidationBonus: '10050',
-  borrowingEnabled: false,
-  stableBorrowRateEnabled: false,
-  reserveDecimals: '18',
-  aTokenImpl: eContractid.AToken,
-  reserveFactor: '1000',
-};
-
 export const strategyDAI: IReserveParams = {
   strategy: rateStrategyStableTwo,
   baseLTVAsCollateral: '7500',
