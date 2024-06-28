@@ -107,6 +107,7 @@ library Errors {
   string public constant LPCM_ITHACA_RESERVE_PROHIBITED = '82'; //  ithaca reserve prohibited
   string public constant LPCM_SENDER_NOT_RECEIVER = '83';
   string public constant FL_NOT_ENOUGH_ALLOWANCE = '84';
+  string public constant LP_CALLER_NOT_FUND_LOCK = '85'; // 'The caller of the function is not the fund lock'
 
   enum CollateralManagerErrors {
     NO_ERROR,

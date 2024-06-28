@@ -164,13 +164,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      GenericLogic.Params(
-        _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle(),
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
-      )
+      _getIthacaCollateralParams()
     );
 
     reserve.updateState();
@@ -405,13 +399,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      GenericLogic.Params(
-        _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle(),
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
-      )
+      _getIthacaCollateralParams()
     );
 
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -469,6 +457,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     address debtAsset,
     uint256 maxCollateralToLiquidate
   ) external override whenNotPaused returns (uint256) {
+    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
+
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
@@ -654,13 +644,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[user],
       _reservesList,
       _reservesCount,
-      GenericLogic.Params(
-        _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle(),
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
-      )
+      _getIthacaCollateralParams()
     );
 
     availableBorrowsETH = GenericLogic.calculateAvailableBorrowsETH(
@@ -787,13 +771,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[from],
       _reservesList,
       _reservesCount,
-      GenericLogic.Params(
-        _addressesProvider.getPriceOracle(),
-        _addressesProvider.getIthacaFeedOracle(),
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
-      )
+      _getIthacaCollateralParams()
     );
 
     uint256 reserveId = _reserves[asset].id;
@@ -978,6 +956,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         : reserve.currentVariableBorrowRate,
       vars.referralCode
     );
+  }
+
+  function _getIthacaCollateralParams() internal view returns (GenericLogic.Params memory) {
+      return GenericLogic.Params(
+        _addressesProvider.getPriceOracle(),
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      );
   }
 
   function _addReserveToList(address asset) internal {

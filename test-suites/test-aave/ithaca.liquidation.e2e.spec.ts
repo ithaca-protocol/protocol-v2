@@ -115,6 +115,31 @@ makeSuite('', (testEnv) => {
 });
 
 makeSuite('', (testEnv) => {
+  describe('only lending pool can call liquidateIthacaCollateral()', () => {
+    it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
+      const { weth, pool, users, usdc } = testEnv;
+
+      const liquidator = users[4];
+      const borrower = users[3];
+
+      await expect(
+        pool
+          .connect(liquidator.signer)
+          .liquidateIthacaCollateral(
+            borrower.address,
+            0,
+            weth.address,
+            usdc.address,
+            (2e18).toFixed(0),
+            { gasLimit: '80000000' }
+          )
+      ).to.be.revertedWith('85');
+    });
+  });
+});
+
+
+makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
 
   describe('liquidate usdc borrowings', () => {
@@ -122,6 +147,8 @@ makeSuite('', (testEnv) => {
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
       ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
+      const fundlock = users[4];
+      await addressesProvider.setFundLock(fundlock.address);
       await addressesProvider.setIthacaFeedOracle(ithacaFeed.address);
     });
 
@@ -297,6 +324,8 @@ makeSuite('', (testEnv) => {
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
       ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
+      const fundlock = users[4];
+      await addressesProvider.setFundLock(fundlock.address);
       await addressesProvider.setIthacaFeedOracle(ithacaFeed.address);
     });
 
@@ -462,6 +491,8 @@ makeSuite('', (testEnv) => {
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
       ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
+      const fundlock = users[4];
+      await addressesProvider.setFundLock(fundlock.address);
       await addressesProvider.setIthacaFeedOracle(ithacaFeed.address);
     });
 
@@ -615,6 +646,8 @@ makeSuite('', (testEnv) => {
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
       ({ weth, users, usdc, pool, oracle, ithacaFeed, addressesProvider } = testEnv);
+      const fundlock = users[4];
+      await addressesProvider.setFundLock(fundlock.address);
       await addressesProvider.setIthacaFeedOracle(ithacaFeed.address);
     });
 

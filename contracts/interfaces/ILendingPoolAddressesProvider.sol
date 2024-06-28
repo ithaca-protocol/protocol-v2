@@ -20,6 +20,7 @@ interface ILendingPoolAddressesProvider {
   event IthacaFeedOracleUpdated(address indexed newAddress);
   event ProxyCreated(bytes32 id, address indexed newAddress);
   event AddressSet(bytes32 id, address indexed newAddress, bool hasProxy);
+  event FundLockUpdated(address indexed fundLock);
 
   function getMarketId() external view returns (string memory);
 
@@ -62,4 +63,8 @@ interface ILendingPoolAddressesProvider {
   function getIthacaFeedOracle() external view returns (address);
 
   function setIthacaFeedOracle(address ithacaFeed) external;
+
+  function setFundLock(address fundLock) external;
+
+  function getFundLock() external view returns (address);
 }
