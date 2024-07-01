@@ -279,6 +279,14 @@ interface ILendingPool {
     bool receiveAToken
   ) external;
 
+  function liquidateIthacaCollateral(
+    address user,
+    uint256 debtToCover,
+    address collateralAsset,
+    address debtAsset,
+    uint256 maxCollateralToLiquidate
+  ) external returns (uint256);
+
   /**
    * @dev Allows smartcontracts to access the liquidity of the pool within one transaction,
    * as long as the amount taken plus a fee is returned.
@@ -344,6 +352,8 @@ interface ILendingPool {
   ) external;
 
   function setConfiguration(address reserve, uint256 configuration) external;
+
+  function configureIthacaCollateral(DataTypes.IthacaCollateralParams memory params) external;
 
   /**
    * @dev Returns the configuration of the reserve

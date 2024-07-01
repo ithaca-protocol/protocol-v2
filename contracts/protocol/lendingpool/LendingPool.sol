@@ -164,7 +164,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     reserve.updateState();
@@ -399,7 +399,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -434,7 +434,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidationCall(address,address,address,uint256,bool)',
+        "liquidationCall(address,address,address,uint256,bool)",
         collateralAsset,
         debtAsset,
         user,
@@ -448,6 +448,40 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
 
     require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+  }
+
+  function liquidateIthacaCollateral(
+    address user,
+    uint256 debtToCover,
+    address collateralAsset,
+    address debtAsset,
+    uint256 maxCollateralToLiquidate
+  ) external override whenNotPaused returns (uint256) {
+    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
+
+    address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
+
+    //solium-disable-next-line
+    (bool success, bytes memory result) = collateralManager.delegatecall(
+      abi.encodeWithSignature(
+        "liquidateIthacaCollateral(address,uint256,address,address,uint256)",
+        user,
+        debtToCover,
+        collateralAsset,
+        debtAsset,
+        maxCollateralToLiquidate
+      )
+    );
+
+    require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
+
+    (uint256 liquidatedCollateral, uint256 returnCode, string memory returnMessage) = abi.decode(
+      result,
+      (uint256, uint256, string)
+    );
+
+    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+    return liquidatedCollateral;
   }
 
   struct FlashLoanLocalVars {
@@ -610,7 +644,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[user],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     availableBorrowsETH = GenericLogic.calculateAvailableBorrowsETH(
@@ -737,7 +771,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[from],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     uint256 reserveId = _reserves[asset].id;
@@ -824,6 +858,10 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
+  function configureIthacaCollateral(DataTypes.IthacaCollateralParams memory params) external override onlyLendingPoolConfigurator{
+    _ithacaCollateralParams = params;
+  }
+
   struct ExecuteBorrowParams {
     address asset;
     address user;
@@ -840,6 +878,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[vars.onBehalfOf];
 
     address oracle = _addressesProvider.getPriceOracle();
+    address ithacaFeed = _addressesProvider.getIthacaFeedOracle();
 
     uint256 amountInETH = IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
       10 ** reserve.configuration.getDecimals()
@@ -848,16 +887,24 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     ValidationLogic.validateBorrow(
       vars.asset,
       reserve,
-      vars.onBehalfOf,
-      vars.amount,
-      amountInETH,
-      vars.interestRateMode,
-      _maxStableRateBorrowSizePercent,
+      ValidationLogic.BorrowParams(
+        vars.onBehalfOf,
+        vars.amount,
+        amountInETH,
+        vars.interestRateMode,
+        _maxStableRateBorrowSizePercent
+      ),
       _reserves,
       userConfig,
       _reservesList,
       _reservesCount,
-      oracle
+      GenericLogic.Params(
+        oracle,
+        ithacaFeed,
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      )
     );
 
     reserve.updateState();
@@ -909,6 +956,16 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         : reserve.currentVariableBorrowRate,
       vars.referralCode
     );
+  }
+
+  function _getIthacaCollateralParams() internal view returns (GenericLogic.Params memory) {
+      return GenericLogic.Params(
+        _addressesProvider.getPriceOracle(),
+        _addressesProvider.getIthacaFeedOracle(),
+        _ithacaCollateralParams.ltv,
+        _ithacaCollateralParams.liquidationBonus,
+        _ithacaCollateralParams.liquidationThreshold
+      );
   }
 
   function _addReserveToList(address asset) internal {

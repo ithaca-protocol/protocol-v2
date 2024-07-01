@@ -31,9 +31,11 @@ makeSuite('AToken: Transfer', (testEnv: TestEnv) => {
 
     await pool
       .connect(users[0].signer)
-      .deposit(dai.address, amountDAItoDeposit, users[0].address, '0');
+      .deposit(dai.address, amountDAItoDeposit, users[0].address, '0', { gasLimit: '80000000' });
 
-    await aDai.connect(users[0].signer).transfer(users[1].address, amountDAItoDeposit);
+    await aDai
+      .connect(users[0].signer)
+      .transfer(users[1].address, amountDAItoDeposit, { gasLimit: '80000000' });
 
     const name = await aDai.name();
 

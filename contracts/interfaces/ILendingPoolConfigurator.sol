@@ -84,6 +84,12 @@ interface ILendingPoolConfigurator {
     uint256 liquidationBonus
   );
 
+  event IthacaCollateralConfigurationChanged(
+    uint256 ltv,
+    uint256 liquidationThreshold,
+    uint256 liquidationBonus
+  );
+
   /**
    * @dev Emitted when stable rate borrowing is enabled on a reserve
    * @param asset The address of the underlying asset of the reserve

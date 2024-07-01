@@ -24,6 +24,9 @@ library UserConfiguration {
     uint256 reserveIndex,
     bool borrowing
   ) internal {
+    if (reserveIndex == 0) {
+      return;
+    }
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     self.data =
       (self.data & ~(1 << (reserveIndex * 2))) |
@@ -56,7 +59,7 @@ library UserConfiguration {
   function isUsingAsCollateralOrBorrowing(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2)) & 3 != 0;
   }
@@ -70,7 +73,11 @@ library UserConfiguration {
   function isBorrowing(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
+    if (reserveIndex == 0) {
+      return false;
+    }
+
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2)) & 1 != 0;
   }
@@ -84,7 +91,7 @@ library UserConfiguration {
   function isUsingAsCollateral(
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
-  ) internal pure returns (bool) {
+  ) internal view returns (bool) {
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2 + 1)) & 1 != 0;
   }
@@ -103,7 +110,7 @@ library UserConfiguration {
    * @param self The configuration object
    * @return True if the user has been borrowing any reserve, false otherwise
    **/
-  function isEmpty(DataTypes.UserConfigurationMap memory self) internal pure returns (bool) {
+  function isEmpty(DataTypes.UserConfigurationMap memory self) internal view returns (bool) {
     return self.data == 0;
   }
 }

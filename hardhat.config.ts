@@ -31,8 +31,8 @@ import 'solidity-coverage';
 import { fork } from 'child_process';
 
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
-const DEFAULT_BLOCK_GAS_LIMIT = 8000000;
-const DEFAULT_GAS_MUL = 5;
+const DEFAULT_BLOCK_GAS_LIMIT = 80000000;
+const DEFAULT_GAS_MUL = 10;
 const HARDFORK = 'istanbul';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
 const MNEMONIC_PATH = "m/44'/60'/0'/0";
@@ -118,6 +118,7 @@ const buidlerConfig: HardhatUserConfig = {
     avalanche: getCommonNetworkConfig(eAvalancheNetwork.avalanche, 43114),
     fuji: getCommonNetworkConfig(eAvalancheNetwork.fuji, 43113),
     goerli: getCommonNetworkConfig(eEthereumNetwork.goerli, 5),
+    arb: getCommonNetworkConfig(eEthereumNetwork.arb, 421614),
     hardhat: {
       hardfork: 'berlin',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,

@@ -27,6 +27,15 @@ interface ILendingPoolCollateralManager {
     bool receiveAToken
   );
 
+  event LiquidateIthacaCollateral(
+    address indexed collateral,
+    address indexed principal,
+    address indexed user,
+    uint256 debtToCover,
+    uint256 liquidatedCollateralAmount,
+    address liquidator
+  );
+
   /**
    * @dev Emitted when a reserve is disabled as collateral for an user
    * @param reserve The address of the reserve
@@ -57,4 +66,12 @@ interface ILendingPoolCollateralManager {
     uint256 debtToCover,
     bool receiveAToken
   ) external returns (uint256, string memory);
+
+  function liquidateIthacaCollateral(
+    address user,
+    uint256 debtToCover,
+    address collateralAsset,
+    address debtAsset,
+    uint256 maxCollateralToLiquidate
+  ) external returns (uint256, uint256, string memory);
 }

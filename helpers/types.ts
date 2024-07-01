@@ -13,7 +13,7 @@ export enum eEthereumNetwork {
   main = 'main',
   coverage = 'coverage',
   hardhat = 'hardhat',
-
+  arb = 'arb',
   tenderly = 'tenderly',
   goerli = 'goerli',
 }
@@ -41,6 +41,7 @@ export enum EthereumNetworkNames {
   xdai = 'xdai',
   avalanche = 'avalanche',
   fuji = 'fuji',
+  arb = 'arb-sepolia',
 }
 
 export enum AavePools {
@@ -104,6 +105,7 @@ export enum eContractid {
   ParaSwapLiquiditySwapAdapter = 'ParaSwapLiquiditySwapAdapter',
   UiIncentiveDataProviderV2V3 = 'UiIncentiveDataProviderV2V3',
   UiIncentiveDataProviderV2 = 'UiIncentiveDataProviderV2',
+  IthacaFeed = 'MockIthacaFeed',
 }
 
 /*
@@ -435,6 +437,7 @@ export interface iEthereumParamsPerNetwork<T> {
   [eEthereumNetwork.hardhat]: T;
   [eEthereumNetwork.tenderly]: T;
   [eEthereumNetwork.goerli]: T;
+  [eEthereumNetwork.arb]: T;
 }
 
 export interface iPolygonParamsPerNetwork<T> {

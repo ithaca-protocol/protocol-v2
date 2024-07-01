@@ -56,6 +56,7 @@ export const NETWORKS_RPC_URL: iParamsPerNetwork<string> = {
   [eAvalancheNetwork.avalanche]: 'https://api.avax.network/ext/bc/C/rpc',
   [eAvalancheNetwork.fuji]: 'https://api.avax-test.network/ext/bc/C/rpc',
   [eEthereumNetwork.goerli]: `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_KEY}`,
+  [eEthereumNetwork.arb]: `https://arbitrum-sepolia.blockpi.network/v1/rpc/public`,
 };
 
 export const NETWORKS_DEFAULT_GAS: iParamsPerNetwork<number> = {
@@ -72,6 +73,8 @@ export const NETWORKS_DEFAULT_GAS: iParamsPerNetwork<number> = {
   [eAvalancheNetwork.avalanche]: 225 * GWEI,
   [eAvalancheNetwork.fuji]: 85 * GWEI,
   [eEthereumNetwork.goerli]: 2 * GWEI,
+  [eEthereumNetwork.arb]: 65 * GWEI,
+
 };
 
 export const BLOCK_TO_FORK: iParamsPerNetwork<number | undefined> = {

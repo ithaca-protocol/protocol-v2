@@ -32,6 +32,7 @@ import {
   authorizeWETHGateway,
   deployATokenImplementations,
   deployAaveOracle,
+  deployMockIthacaFeed,
 } from '../../helpers/contracts-deployments';
 import { Signer } from 'ethers';
 import { TokenContractId, eContractid, tEthereumAddress, AavePools } from '../../helpers/types';
@@ -135,6 +136,12 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   const lendingPoolConfiguratorProxy = await getLendingPoolConfiguratorProxy(
     await addressesProvider.getLendingPoolConfigurator()
   );
+
+  await waitForTx(
+    // ltv, threshold, bonus
+    await lendingPoolConfiguratorProxy.configureIthacaCollateral(10000, 10000, 10050)
+  );
+
   await insertContractAddressInDb(
     eContractid.LendingPoolConfigurator,
     lendingPoolConfiguratorProxy.address
@@ -296,6 +303,10 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await deployUniswapLiquiditySwapAdapter(adapterParams);
   await deployUniswapRepayAdapter(adapterParams);
   await deployFlashLiquidationAdapter(adapterParams);
+
+  const ithacaFeed = await deployMockIthacaFeed();
+
+  await waitForTx(await addressesProvider.setIthacaFeedOracle(ithacaFeed.address));
 
   const augustus = await deployMockParaSwapAugustus();
 
