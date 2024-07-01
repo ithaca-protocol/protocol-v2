@@ -2,20 +2,20 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from '../../../dependencies/openzeppelin/contracts/SafeMath.sol';
-import {IERC20} from '../../../dependencies/openzeppelin/contracts/IERC20.sol';
-import {ReserveLogic} from './ReserveLogic.sol';
-import {GenericLogic} from './GenericLogic.sol';
-import {WadRayMath} from '../math/WadRayMath.sol';
-import {PercentageMath} from '../math/PercentageMath.sol';
-import {SafeERC20} from '../../../dependencies/openzeppelin/contracts/SafeERC20.sol';
-import {ReserveConfiguration} from '../configuration/ReserveConfiguration.sol';
-import {UserConfiguration} from '../configuration/UserConfiguration.sol';
-import {Errors} from '../helpers/Errors.sol';
-import {Helpers} from '../helpers/Helpers.sol';
-import {IReserveInterestRateStrategy} from '../../../interfaces/IReserveInterestRateStrategy.sol';
-import {DataTypes} from '../types/DataTypes.sol';
-import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
+import {SafeMath} from "../../../dependencies/openzeppelin/contracts/SafeMath.sol";
+import {IERC20} from "../../../dependencies/openzeppelin/contracts/IERC20.sol";
+import {ReserveLogic} from "./ReserveLogic.sol";
+import {GenericLogic} from "./GenericLogic.sol";
+import {WadRayMath} from "../math/WadRayMath.sol";
+import {PercentageMath} from "../math/PercentageMath.sol";
+import {SafeERC20} from "../../../dependencies/openzeppelin/contracts/SafeERC20.sol";
+import {ReserveConfiguration} from "../configuration/ReserveConfiguration.sol";
+import {UserConfiguration} from "../configuration/UserConfiguration.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Helpers} from "../helpers/Helpers.sol";
+import {IReserveInterestRateStrategy} from "../../../interfaces/IReserveInterestRateStrategy.sol";
+import {DataTypes} from "../types/DataTypes.sol";
+import {IIthacaFeed} from "../../ithaca/IIthacaFeed.sol";
 
 /**
  * @title ReserveLogic library
@@ -377,15 +377,6 @@ library ValidationLogic {
         ),
       Errors.VL_DEPOSIT_ALREADY_IN_USE
     );
-  }
-
-  /**
-   * @dev Validates a flashloan action
-   * @param assets The assets being flashborrowed
-   * @param amounts The amounts for each asset being borrowed
-   **/
-  function validateFlashloan(address[] memory assets, uint256[] memory amounts) internal pure {
-    require(assets.length == amounts.length, Errors.VL_INCONSISTENT_FLASHLOAN_PARAMS);
   }
 
   /**
