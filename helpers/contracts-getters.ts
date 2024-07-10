@@ -112,6 +112,14 @@ export const getMintableERC20 = async (address: tEthereumAddress) =>
     await getFirstSigner()
   );
 
+export const getMintableERC20FromDB = async (symbol: string) =>
+  await MintableERC20Factory.connect(
+    (
+      await getDb().get(`${symbol}.${DRE.network.name}`).value()
+    ).address,
+    await getFirstSigner()
+  );
+
 export const getIErc20Detailed = async (address: tEthereumAddress) =>
   await IERC20DetailedFactory.connect(
     address ||

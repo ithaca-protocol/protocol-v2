@@ -73,7 +73,7 @@ export const NETWORKS_DEFAULT_GAS: iParamsPerNetwork<number> = {
   [eAvalancheNetwork.avalanche]: 225 * GWEI,
   [eAvalancheNetwork.fuji]: 85 * GWEI,
   [eEthereumNetwork.goerli]: 2 * GWEI,
-  [eEthereumNetwork.arb]: 65 * GWEI,
+  [eEthereumNetwork.arb]: 3 * GWEI,
 
 };
 

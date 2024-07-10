@@ -85,7 +85,7 @@ export const AaveConfig: IAaveConfiguration = {
       ZRX: '0xD0d76886cF8D952ca26177EB7CfDf83bad08C00C',
     },
     [eEthereumNetwork.arb]: {
-      AAVE: '0x30fa2fbe15c1eadfbef28c188b7b8dbd3c1ff2eb',
+      AAVE: '0xe50fA9b3c56FfB159cB0FCA61F5c9D750e8128c8',
       BAT: '0x2d12186Fbb9f9a8C28B3FfdD4c42920f8539D738',
       BUSD: '0x4c6E1EFC12FDfD568186b7BAEc0A43fFfb4bCcCf',
       DAI: '0x30fa2fbe15c1eadfbef28c188b7b8dbd3c1ff2eb',
