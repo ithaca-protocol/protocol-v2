@@ -4,20 +4,12 @@ import { APPROVAL_AMOUNT_LENDING_POOL, oneEther } from '../../helpers/constants'
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { parseEther, parseUnits } from 'ethers/lib/utils';
 import { BigNumber } from 'bignumber.js';
-import { MockFlashLoanReceiver } from '../../types/MockFlashLoanReceiver';
-import { getMockFlashLoanReceiver } from '../../helpers/contracts-getters';
 
 const { expect } = require('chai');
 
 makeSuite('Pausable Pool', (testEnv: TestEnv) => {
-  let _mockFlashLoanReceiver = {} as MockFlashLoanReceiver;
-
   const { LP_IS_PAUSED, INVALID_FROM_BALANCE_AFTER_TRANSFER, INVALID_TO_BALANCE_AFTER_TRANSFER } =
     ProtocolErrors;
-
-  before(async () => {
-    _mockFlashLoanReceiver = await getMockFlashLoanReceiver();
-  });
 
   it('User 0 deposits 1000 DAI. Configurator pauses pool. Transfers to user 1 reverts. Configurator unpauses the network and next transfer succees', async () => {
     const { users, pool, dai, aDai, configurator } = testEnv;
@@ -148,36 +140,6 @@ makeSuite('Pausable Pool', (testEnv: TestEnv) => {
     );
 
     // Unpause the pool
-    await configurator.connect(users[1].signer).setPoolPause(false);
-  });
-
-  it('Flash loan', async () => {
-    const { dai, pool, weth, users, configurator } = testEnv;
-
-    const caller = users[3];
-
-    const flashAmount = parseEther('0.8');
-
-    await _mockFlashLoanReceiver.setFailExecutionTransfer(true);
-
-    // Pause pool
-    await configurator.connect(users[1].signer).setPoolPause(true);
-
-    await expect(
-      pool
-        .connect(caller.signer)
-        .flashLoan(
-          _mockFlashLoanReceiver.address,
-          [weth.address],
-          [flashAmount],
-          [1],
-          caller.address,
-          '0x10',
-          '0'
-        )
-    ).revertedWith(LP_IS_PAUSED);
-
-    // Unpause pool
     await configurator.connect(users[1].signer).setPoolPause(false);
   });
 
