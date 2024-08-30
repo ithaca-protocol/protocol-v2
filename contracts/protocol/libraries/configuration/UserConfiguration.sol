@@ -24,9 +24,6 @@ library UserConfiguration {
     uint256 reserveIndex,
     bool borrowing
   ) internal {
-    if (reserveIndex == 0) {
-      return;
-    }
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     self.data =
       (self.data & ~(1 << (reserveIndex * 2))) |
@@ -74,10 +71,6 @@ library UserConfiguration {
     DataTypes.UserConfigurationMap memory self,
     uint256 reserveIndex
   ) internal view returns (bool) {
-    if (reserveIndex == 0) {
-      return false;
-    }
-
     require(reserveIndex < 128, Errors.UL_INVALID_INDEX);
     return (self.data >> (reserveIndex * 2)) & 1 != 0;
   }
