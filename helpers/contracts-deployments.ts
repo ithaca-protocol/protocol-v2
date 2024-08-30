@@ -34,23 +34,16 @@ import {
   MockAggregatorFactory,
   MockATokenFactory,
   MockFlashLoanReceiverFactory,
-  MockParaSwapAugustusFactory,
-  MockParaSwapAugustusRegistryFactory,
   MockStableDebtTokenFactory,
   MockVariableDebtTokenFactory,
-  MockUniswapV2Router02Factory,
-  ParaSwapLiquiditySwapAdapterFactory,
   PriceOracleFactory,
   ReserveLogicFactory,
   SelfdestructTransferFactory,
   StableDebtTokenFactory,
-  UniswapLiquiditySwapAdapterFactory,
-  UniswapRepayAdapterFactory,
   VariableDebtTokenFactory,
   WalletBalanceProviderFactory,
   WETH9MockedFactory,
   WETHGatewayFactory,
-  FlashLiquidationAdapterFactory,
   UiPoolDataProviderV2Factory,
   UiPoolDataProviderV2V3Factory,
   UiIncentiveDataProviderV2V3,
@@ -135,9 +128,6 @@ export const deployUiPoolDataProvider = async (
 };
 
 const readArtifact = async (id: string) => {
-  if (DRE.network.name === eEthereumNetwork.buidlerevm) {
-    return buidlerReadArtifact(DRE.config.paths.artifacts, id);
-  }
   return (DRE as HardhatRuntimeEnvironment).artifacts.readArtifact(id);
 };
 
@@ -653,47 +643,6 @@ export const deploySelfdestructTransferMock = async (verify?: boolean) =>
     verify
   );
 
-export const deployMockUniswapRouter = async (verify?: boolean) =>
-  withSaveAndVerify(
-    await new MockUniswapV2Router02Factory(await getFirstSigner()).deploy(),
-    eContractid.MockUniswapV2Router02,
-    [],
-    verify
-  );
-
-export const deployUniswapLiquiditySwapAdapter = async (
-  args: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new UniswapLiquiditySwapAdapterFactory(await getFirstSigner()).deploy(...args),
-    eContractid.UniswapLiquiditySwapAdapter,
-    args,
-    verify
-  );
-
-export const deployUniswapRepayAdapter = async (
-  args: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new UniswapRepayAdapterFactory(await getFirstSigner()).deploy(...args),
-    eContractid.UniswapRepayAdapter,
-    args,
-    verify
-  );
-
-export const deployFlashLiquidationAdapter = async (
-  args: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new FlashLiquidationAdapterFactory(await getFirstSigner()).deploy(...args),
-    eContractid.FlashLiquidationAdapter,
-    args,
-    verify
-  );
-
 export const deployMockIthacaFeed = async (verify?: boolean) =>
   withSaveAndVerify(
     await new MockIthacaFeedFactory(await getFirstSigner()).deploy(),
@@ -771,32 +720,3 @@ export const deployRateStrategy = async (
       ).address;
   }
 };
-export const deployMockParaSwapAugustus = async (verify?: boolean) =>
-  withSaveAndVerify(
-    await new MockParaSwapAugustusFactory(await getFirstSigner()).deploy(),
-    eContractid.MockParaSwapAugustus,
-    [],
-    verify
-  );
-
-export const deployMockParaSwapAugustusRegistry = async (
-  args: [tEthereumAddress],
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new MockParaSwapAugustusRegistryFactory(await getFirstSigner()).deploy(...args),
-    eContractid.MockParaSwapAugustusRegistry,
-    args,
-    verify
-  );
-
-export const deployParaSwapLiquiditySwapAdapter = async (
-  args: [tEthereumAddress, tEthereumAddress],
-  verify?: boolean
-) =>
-  withSaveAndVerify(
-    await new ParaSwapLiquiditySwapAdapterFactory(await getFirstSigner()).deploy(...args),
-    eContractid.ParaSwapLiquiditySwapAdapter,
-    args,
-    verify
-  );

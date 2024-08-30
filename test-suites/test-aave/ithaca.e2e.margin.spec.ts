@@ -33,7 +33,7 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
       .connect(borrower.signer)
       .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
@@ -41,11 +41,11 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
     //approve protocol to access depositor wallet
     await usdc.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 1 deposits 1000 DAI
-    const amountDAItoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
+    //user 1 deposits 1000 USDC
+    const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
 
     let userGlobalData = await pool.connect(borrower.signer).getUserAccountData(borrower.address);
 
@@ -117,7 +117,7 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
       .connect(borrower.signer)
       .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
@@ -125,7 +125,7 @@ makeSuite('Ithaca-protocol e2e test margin requirements', (testEnv) => {
     //approve protocol to access depositor wallet
     await usdc.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 1 deposits 1000 DAI
+    //user 1 deposits 1000 USDC
     const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
     await pool
       .connect(depositor.signer)

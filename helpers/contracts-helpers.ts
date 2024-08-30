@@ -11,22 +11,14 @@ import {
   AavePools,
   iParamsPerNetwork,
   iParamsPerPool,
-  ePolygonNetwork,
-  eXDaiNetwork,
   eNetwork,
   iEthereumParamsPerNetwork,
-  iPolygonParamsPerNetwork,
-  iXDaiParamsPerNetwork,
-  iAvalancheParamsPerNetwork,
-  eAvalancheNetwork,
 } from './types';
 import { MintableERC20 } from '../types/MintableERC20';
 import { Artifact } from 'hardhat/types';
 import { Artifact as BuidlerArtifact } from '@nomiclabs/buidler/types';
 import { verifyEtherscanContract } from './etherscan-verification';
 import { getFirstSigner, getIErc20Detailed } from './contracts-getters';
-import { usingTenderly, verifyAtTenderly } from './tenderly-utils';
-import { usingPolygon, verifyAtPolygon } from './polygon-utils';
 import { ConfigNames, loadPoolConfig } from './configuration';
 import { ZERO_ADDRESS } from './constants';
 import { getDefenderRelaySigner, usingDefender } from './defender-utils';
@@ -145,42 +137,14 @@ export const linkBytecode = (artifact: BuidlerArtifact | Artifact, libraries: an
 };
 
 export const getParamPerNetwork = <T>(param: iParamsPerNetwork<T>, network: eNetwork) => {
-  const { main, ropsten, kovan, coverage, buidlerevm, tenderly, goerli, arbitrumSepolia } =
-    param as iEthereumParamsPerNetwork<T>;
-  const { matic, mumbai } = param as iPolygonParamsPerNetwork<T>;
-  const { xdai } = param as iXDaiParamsPerNetwork<T>;
-  const { avalanche, fuji } = param as iAvalancheParamsPerNetwork<T>;
+  const { hardhat, arbitrumSepolia } = param as iEthereumParamsPerNetwork<T>;
   if (process.env.FORK) {
     return param[process.env.FORK as eNetwork] as T;
   }
 
   switch (network) {
-    case eEthereumNetwork.coverage:
-      return coverage;
-    case eEthereumNetwork.buidlerevm:
-      return buidlerevm;
     case eEthereumNetwork.hardhat:
-      return buidlerevm;
-    case eEthereumNetwork.kovan:
-      return kovan;
-    case eEthereumNetwork.ropsten:
-      return ropsten;
-    case eEthereumNetwork.main:
-      return main;
-    case eEthereumNetwork.tenderly:
-      return tenderly;
-    case ePolygonNetwork.matic:
-      return matic;
-    case ePolygonNetwork.mumbai:
-      return mumbai;
-    case eXDaiNetwork.xdai:
-      return xdai;
-    case eAvalancheNetwork.avalanche:
-      return avalanche;
-    case eAvalancheNetwork.fuji:
-      return fuji;
-    case eEthereumNetwork.goerli:
-      return goerli;
+      return hardhat;
     case eEthereumNetwork.arbitrumSepolia:
       return arbitrumSepolia;
   }
@@ -196,19 +160,10 @@ export const getOptionalParamAddressPerNetwork = (
   return getParamPerNetwork(param, network);
 };
 
-export const getParamPerPool = <T>(
-  { proto, amm, matic, avalanche }: iParamsPerPool<T>,
-  pool: AavePools
-) => {
+export const getParamPerPool = <T>({ proto }: iParamsPerPool<T>, pool: AavePools) => {
   switch (pool) {
     case AavePools.proto:
       return proto;
-    case AavePools.amm:
-      return amm;
-    case AavePools.matic:
-      return matic;
-    case AavePools.avalanche:
-      return avalanche;
     default:
       return proto;
   }
@@ -281,43 +236,6 @@ export const getSignatureFromTypedData = (
   return fromRpcSig(signature);
 };
 
-export const buildLiquiditySwapParams = (
-  assetToSwapToList: tEthereumAddress[],
-  minAmountsToReceive: BigNumberish[],
-  swapAllBalances: BigNumberish[],
-  permitAmounts: BigNumberish[],
-  deadlines: BigNumberish[],
-  v: BigNumberish[],
-  r: (string | Buffer)[],
-  s: (string | Buffer)[],
-  useEthPath: boolean[]
-) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    [
-      'address[]',
-      'uint256[]',
-      'bool[]',
-      'uint256[]',
-      'uint256[]',
-      'uint8[]',
-      'bytes32[]',
-      'bytes32[]',
-      'bool[]',
-    ],
-    [
-      assetToSwapToList,
-      minAmountsToReceive,
-      swapAllBalances,
-      permitAmounts,
-      deadlines,
-      v,
-      r,
-      s,
-      useEthPath,
-    ]
-  );
-};
-
 export const buildRepayAdapterParams = (
   collateralAsset: tEthereumAddress,
   collateralAmount: BigNumberish,
@@ -335,59 +253,11 @@ export const buildRepayAdapterParams = (
   );
 };
 
-export const buildFlashLiquidationAdapterParams = (
-  collateralAsset: tEthereumAddress,
-  debtAsset: tEthereumAddress,
-  user: tEthereumAddress,
-  debtToCover: BigNumberish,
-  useEthPath: boolean
-) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    ['address', 'address', 'address', 'uint256', 'bool'],
-    [collateralAsset, debtAsset, user, debtToCover, useEthPath]
-  );
-};
-
-export const buildParaSwapLiquiditySwapParams = (
-  assetToSwapTo: tEthereumAddress,
-  minAmountToReceive: BigNumberish,
-  swapAllBalanceOffset: BigNumberish,
-  swapCalldata: string | Buffer,
-  augustus: tEthereumAddress,
-  permitAmount: BigNumberish,
-  deadline: BigNumberish,
-  v: BigNumberish,
-  r: string | Buffer,
-  s: string | Buffer
-) => {
-  return ethers.utils.defaultAbiCoder.encode(
-    [
-      'address',
-      'uint256',
-      'uint256',
-      'bytes',
-      'address',
-      'tuple(uint256,uint256,uint8,bytes32,bytes32)',
-    ],
-    [
-      assetToSwapTo,
-      minAmountToReceive,
-      swapAllBalanceOffset,
-      swapCalldata,
-      augustus,
-      [permitAmount, deadline, v, r, s],
-    ]
-  );
-};
-
 export const verifyContract = async (
   id: string,
   instance: Contract,
   args: (string | string[])[]
 ) => {
-  if (usingTenderly()) {
-    await verifyAtTenderly(id, instance);
-  }
   await verifyEtherscanContract(instance.address, args);
   return instance;
 };

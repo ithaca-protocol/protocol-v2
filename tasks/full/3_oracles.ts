@@ -41,6 +41,16 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       const fallbackOracleAddress = await getParamPerNetwork(FallbackOracle, network);
       const reserveAssets = await getParamPerNetwork(ReserveAssets, network);
       const chainlinkAggregators = await getParamPerNetwork(ChainlinkAggregator, network);
+      console.log(
+        !!lendingRateOracles,
+        !!addressesProvider,
+        !!admin,
+        !!aaveOracleAddress,
+        !!lendingRateOracleAddress,
+        !!fallbackOracleAddress,
+        !!reserveAssets,
+        !!chainlinkAggregators
+      );
 
       const tokensToWatch: SymbolMap<string> = {
         ...reserveAssets,
@@ -92,12 +102,6 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       await waitForTx(await addressesProvider.setPriceOracle(aaveOracle.address));
       await waitForTx(await addressesProvider.setLendingRateOracle(lendingRateOracle.address));
     } catch (error) {
-      if (DRE.network.name.includes('tenderly')) {
-        const transactionLink = `https://dashboard.tenderly.co/${DRE.config.tenderly.username}/${
-          DRE.config.tenderly.project
-        }/fork/${DRE.tenderly.network().getFork()}/simulation/${DRE.tenderly.network().getHead()}`;
-        console.error('Check tx error:', transactionLink);
-      }
       throw error;
     }
   });

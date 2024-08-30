@@ -20,7 +20,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     const depositor = users[0];
     const borrower = users[1];
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
@@ -29,11 +29,11 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     await usdc.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
     //user 1 deposits 1000 USDC
-    const amountDAItoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
+    const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
 
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
 
     let userGlobalData = await pool.getUserAccountData(borrower.address);
 
@@ -106,7 +106,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
       .connect(borrower.signer)
       .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
@@ -114,11 +114,11 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     //approve protocol to access depositor wallet
     await usdc.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 1 deposits 1000 DAI
-    const amountDAItoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
+    //user 1 deposits 1000 USDC
+    const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, amountDAItoDeposit, depositor.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, depositor.address, '0');
 
     let userGlobalData = await pool.getUserAccountData(borrower.address);
 
@@ -191,7 +191,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
       .connect(borrower.signer)
       .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await weth
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(weth.address, '1000'));
@@ -199,7 +199,7 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     //approve protocol to access depositor wallet
     await weth.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 1 deposits 1000 DAI
+    //user 1 deposits 1000 USDC
     const amountWETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1000');
     await pool
       .connect(depositor.signer)
@@ -271,19 +271,19 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
       .connect(borrower.signer)
       .deposit(weth.address, amountETHtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc.connect(borrower.signer).mint('271950383');
 
     //approve protocol to access depositor wallet
     await usdc.connect(borrower.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 2 deposits 1 DAI
-    const amountDAItoDeposit = '271950383';
+    //user 2 deposits 1 USDC
+    const amountUSDCtoDeposit = '271950383';
     await pool
       .connect(borrower.signer)
-      .deposit(usdc.address, amountDAItoDeposit, borrower.address, '0');
+      .deposit(usdc.address, amountUSDCtoDeposit, borrower.address, '0');
 
-    //mints DAI to depositor
+    //mints USDC to depositor
     await usdc
       .connect(depositor.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
@@ -291,11 +291,11 @@ makeSuite('Ithaca-protocol e2e test', (testEnv) => {
     //approve protocol to access depositor wallet
     await usdc.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-    //user 1 deposits 1000 DAI
-    const _amountDAItoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
+    //user 1 deposits 1000 USDC
+    const _amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1000');
     await pool
       .connect(depositor.signer)
-      .deposit(usdc.address, _amountDAItoDeposit, depositor.address, '0');
+      .deposit(usdc.address, _amountUSDCtoDeposit, depositor.address, '0');
 
     let userGlobalData = await pool.connect(borrower.signer).getUserAccountData(borrower.address);
 

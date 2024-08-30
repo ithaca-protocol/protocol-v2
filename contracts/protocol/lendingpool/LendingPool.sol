@@ -434,7 +434,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        "liquidationCall(address,address,address,uint256,bool)",
+        'liquidationCall(address,address,address,uint256,bool)',
         collateralAsset,
         debtAsset,
         user,
@@ -464,7 +464,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        "liquidateIthacaCollateral(address,uint256,address,address,uint256)",
+        'liquidateIthacaCollateral(address,uint256,address,address,uint256)',
         user,
         debtToCover,
         collateralAsset,
@@ -858,7 +858,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
-  function configureIthacaCollateral(DataTypes.IthacaCollateralParams memory params) external override onlyLendingPoolConfigurator{
+  function configureIthacaCollateral(
+    DataTypes.IthacaCollateralParams memory params
+  ) external override onlyLendingPoolConfigurator {
     _ithacaCollateralParams = params;
   }
 
@@ -959,7 +961,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   function _getIthacaCollateralParams() internal view returns (GenericLogic.Params memory) {
-      return GenericLogic.Params(
+    return
+      GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
         _addressesProvider.getIthacaFeedOracle(),
         _ithacaCollateralParams.ltv,
