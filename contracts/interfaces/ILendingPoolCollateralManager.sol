@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
 
 /**
  * @title ILendingPoolCollateralManager
@@ -7,6 +8,13 @@ pragma solidity 0.6.12;
  * @notice Defines the actions involving management of collateral in the protocol.
  **/
 interface ILendingPoolCollateralManager {
+  struct IthacaLiquidationCallReturnVars {
+    uint256 debtLiquidated;
+    uint256 ithacaCollateralLiquidated;
+    uint256 errorCode;
+    string errorMsg;
+  }
+
   /**
    * @dev Emitted when a borrower is liquidated
    * @param collateral The address of the collateral being liquidated
@@ -25,15 +33,6 @@ interface ILendingPoolCollateralManager {
     uint256 liquidatedCollateralAmount,
     address liquidator,
     bool receiveAToken
-  );
-
-  event LiquidateIthacaCollateral(
-    address indexed collateral,
-    address indexed principal,
-    address indexed user,
-    uint256 debtToCover,
-    uint256 liquidatedCollateralAmount,
-    address liquidator
   );
 
   /**
@@ -64,14 +63,23 @@ interface ILendingPoolCollateralManager {
     address principal,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
-  ) external returns (uint256, string memory);
+    bool receiveAToken,
+    uint256 ithacaCollateralBalance
+  ) external returns (IthacaLiquidationCallReturnVars memory);
 
-  function liquidateIthacaCollateral(
+  /**
+   * @dev Ithaca fundlock can invoke this function to liquidate an undercollateralized position.
+   * @param collateral The address of the collateral to liquidated
+   * @param principal The address of the principal reserve
+   * @param user The address of the borrower
+   * @param debtToCover The amount of principal that the liquidator wants to repay
+   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
+   **/
+  function ithacaLiquidationCall(
+    address collateral,
+    address principal,
     address user,
     uint256 debtToCover,
-    address collateralAsset,
-    address debtAsset,
-    uint256 maxCollateralToLiquidate
-  ) external returns (uint256, uint256, string memory);
+    uint256 ithacaCollateralBalance
+  ) external returns (IthacaLiquidationCallReturnVars memory);
 }

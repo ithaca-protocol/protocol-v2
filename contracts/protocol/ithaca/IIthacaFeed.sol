@@ -16,5 +16,5 @@ interface IIthacaFeed {
     uint256 valueAtRisk;
   }
 
-  function getClientData(address client) external view returns (ClientParams calldata);
+  function getClientData(address client) external view returns (ClientParams memory);
 }

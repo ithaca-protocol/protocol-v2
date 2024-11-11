@@ -12,6 +12,7 @@ import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
 import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
+import {IFundlock} from '../../ithaca/IFundlock.sol';
 
 /**
  * @title GenericLogic library
@@ -26,7 +27,7 @@ library GenericLogic {
   using ReserveConfiguration for DataTypes.ReserveConfigurationMap;
   using UserConfiguration for DataTypes.UserConfigurationMap;
 
-  uint256 public constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 1 ether;
+  uint256 public constant HEALTH_FACTOR_LIQUIDATION_THRESHOLD = 1.2 ether;
 
   struct balanceDecreaseAllowedLocalVars {
     uint256 decimals;
@@ -237,10 +238,6 @@ library GenericLogic {
     CalculateUserAccountDataVars memory vars;
 
     for (vars.i = 0; vars.i < reservesCount; vars.i++) {
-      if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
-        continue;
-      }
-
       vars.currentReserveAddress = reserves[vars.i];
       DataTypes.ReserveData storage currentReserve = reservesData[vars.currentReserveAddress];
 
@@ -252,6 +249,24 @@ library GenericLogic {
       vars.reserveUnitPrice = IPriceOracleGetter(params.oracle).getAssetPrice(
         vars.currentReserveAddress
       );
+
+      vars.compoundedLiquidityBalance = IFundlock(params.fundlock).balanceSheet(
+        user,
+        vars.currentReserveAddress
+      );
+
+      uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(
+        vars.tokenUnit
+      );
+
+      vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+
+      vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH);
+      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(liquidityBalanceETH);
+
+      if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
+        continue;
+      }
 
       if (vars.liquidationThreshold != 0 && userConfig.isUsingAsCollateral(vars.i)) {
         vars.compoundedLiquidityBalance = IERC20(currentReserve.aTokenAddress).balanceOf(user);

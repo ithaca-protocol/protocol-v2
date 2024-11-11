@@ -403,10 +403,13 @@ library ValidationLogic {
     DataTypes.UserConfigurationMap storage userConfig,
     uint256 userHealthFactor,
     uint256 userStableDebt,
-    uint256 userVariableDebt
+    uint256 userVariableDebt,
+    uint256 ithacaCollateralBalance
   ) internal view returns (uint256, string memory) {
+    bool isIthacaCollateralEnabled = ithacaCollateralBalance != 0;
     if (
-      !collateralReserve.configuration.getActive() || !principalReserve.configuration.getActive()
+      (!isIthacaCollateralEnabled && !collateralReserve.configuration.getActive()) ||
+      !principalReserve.configuration.getActive()
     ) {
       return (
         uint256(Errors.CollateralManagerErrors.NO_ACTIVE_RESERVE),
@@ -425,49 +428,7 @@ library ValidationLogic {
       userConfig.isUsingAsCollateral(collateralReserve.id);
 
     //if collateral isn't enabled as collateral by user, it cannot be liquidated
-    if (!isCollateralEnabled) {
-      return (
-        uint256(Errors.CollateralManagerErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
-        Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED
-      );
-    }
-
-    if (userStableDebt == 0 && userVariableDebt == 0) {
-      return (
-        uint256(Errors.CollateralManagerErrors.CURRRENCY_NOT_BORROWED),
-        Errors.LPCM_SPECIFIED_CURRENCY_NOT_BORROWED_BY_USER
-      );
-    }
-
-    return (uint256(Errors.CollateralManagerErrors.NO_ERROR), Errors.LPCM_NO_ERRORS);
-  }
-
-  function validateLiquideIthacaCollateralCall(
-    DataTypes.ReserveData storage principalReserve,
-    uint256 userHealthFactor,
-    uint256 userStableDebt,
-    uint256 userVariableDebt,
-    DataTypes.IthacaCollateralParams memory params
-  ) internal view returns (uint256, string memory) {
-
-    if (!principalReserve.configuration.getActive()) {
-      return (
-        uint256(Errors.CollateralManagerErrors.NO_ACTIVE_RESERVE),
-        Errors.VL_NO_ACTIVE_RESERVE
-      );
-    }
-
-    if (userHealthFactor >= GenericLogic.HEALTH_FACTOR_LIQUIDATION_THRESHOLD) {
-      return (
-        uint256(Errors.CollateralManagerErrors.HEALTH_FACTOR_ABOVE_THRESHOLD),
-        Errors.LPCM_HEALTH_FACTOR_NOT_BELOW_THRESHOLD
-      );
-    }
-
-    bool isValidLiquidationThreshold = params.liquidationThreshold > 0;
-
-    //if collateral isn't enabled as collateral by user, it cannot be liquidated
-    if (!isValidLiquidationThreshold) {
+    if (!isCollateralEnabled && !isIthacaCollateralEnabled) {
       return (
         uint256(Errors.CollateralManagerErrors.COLLATERAL_CANNOT_BE_LIQUIDATED),
         Errors.LPCM_COLLATERAL_CANNOT_BE_LIQUIDATED

@@ -421,67 +421,86 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
    * to receive the underlying collateral asset directly
+   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
    **/
   function liquidationCall(
     address collateralAsset,
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
-  ) external override whenNotPaused {
+    bool receiveAToken,
+    uint256 ithacaCollateralBalance
+  ) external override whenNotPaused returns (uint256, uint256) {
+    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidationCall(address,address,address,uint256,bool)',
+        'liquidationCall(address,address,address,uint256,bool,uint256)',
         collateralAsset,
         debtAsset,
         user,
         debtToCover,
-        receiveAToken
+        receiveAToken,
+        ithacaCollateralBalance
       )
     );
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
+    IthacaLiquidationCallReturnVars memory returnVars = abi.decode(
+      result,
+      (IthacaLiquidationCallReturnVars)
+    );
 
-    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+    require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
+
+    return (returnVars.debtLiquidated, returnVars.ithacaCollateralLiquidated);
   }
 
-  function liquidateIthacaCollateral(
-    address user,
-    uint256 debtToCover,
+  /**
+   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1
+   * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
+   *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
+   * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
+   * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
+   * @param user The address of the borrower getting liquidated
+   * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
+   * @param currentAvailableCollateral The amount deposited as collateral in Ithaca
+   **/
+  function ithacaLiquidationCall(
     address collateralAsset,
     address debtAsset,
-    uint256 maxCollateralToLiquidate
-  ) external override whenNotPaused returns (uint256) {
+    address user,
+    uint256 debtToCover,
+    uint256 currentAvailableCollateral
+  ) external override whenNotPaused returns (uint256, uint256) {
     require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
-
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidateIthacaCollateral(address,uint256,address,address,uint256)',
-        user,
-        debtToCover,
+        'ithacaLiquidationCall(address,address,address,uint256,uint256)',
         collateralAsset,
         debtAsset,
-        maxCollateralToLiquidate
+        user,
+        debtToCover,
+        currentAvailableCollateral
       )
     );
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    (uint256 liquidatedCollateral, uint256 returnCode, string memory returnMessage) = abi.decode(
+    IthacaLiquidationCallReturnVars memory returnVars = abi.decode(
       result,
-      (uint256, uint256, string)
+      (IthacaLiquidationCallReturnVars)
     );
 
-    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
-    return liquidatedCollateral;
+    require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
+
+    return (returnVars.debtLiquidated, returnVars.ithacaCollateralLiquidated);
   }
 
   struct FlashLoanLocalVars {
@@ -915,10 +934,8 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _reservesCount,
       GenericLogic.Params(
         oracle,
-        ithacaFeed,
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
+        _addressesProvider.getIthacaFeedOracle(),
+        _addressesProvider.getFundLock()
       )
     );
 
