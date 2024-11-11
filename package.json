@@ -9,6 +9,8 @@
   "scripts": {
     "full-deploy-arb-sepolia": "hardhat full:deploy --network arbitrumSepolia",
     "dev-deploy-arb-sepolia": "hardhat dev:deploy --network arbitrumSepolia",
+    "full-deploy-arb": "hardhat full:deploy --network arbitrum",
+    "dev-deploy-arb": "hardhat dev:deploy --network arbitrum",
     "run-env": "npm i && tail -f /dev/null",
     "hardhat": "hardhat",
     "compile": "SKIP_LOAD=true hardhat compile",

@@ -90,6 +90,7 @@ const buidlerConfig: HardhatUserConfig = {
   },
   networks: {
     arbitrumSepolia: getCommonNetworkConfig(eEthereumNetwork.arbitrumSepolia, 421614),
+    arbitrum: getCommonNetworkConfig(eEthereumNetwork.arbitrum, 42161),
     hardhat: {
       hardfork: 'berlin',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,

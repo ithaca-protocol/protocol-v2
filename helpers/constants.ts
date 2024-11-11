@@ -42,8 +42,10 @@ export const MOCK_CHAINLINK_AGGREGATORS_PRICES = {
 
 export const chainlinkAggregatorProxy = {
   arbitrumSepolia: '0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165',
+  arbitrum: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
 };
 
 export const chainlinkEthUsdAggregatorProxy = {
   arbitrumSepolia: '0xd30e2101a97dcbAeBCBC04F14C3f624E67A35165',
+  arbitrum: '0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612',
 };

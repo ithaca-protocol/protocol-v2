@@ -9,10 +9,12 @@ export type eNetwork = eEthereumNetwork;
 export enum eEthereumNetwork {
   hardhat = 'hardhat',
   arbitrumSepolia = 'arbitrumSepolia',
+  arbitrum = 'arbitrum',
 }
 
 export enum EthereumNetworkNames {
   arbitrumSepolia = 'arbitrumSepolia',
+  arbitrum = 'arbitrum',
 }
 
 export enum AavePools {
@@ -255,6 +257,7 @@ export interface iParamsPerNetworkAll<T> extends iEthereumParamsPerNetwork<T> {}
 export interface iEthereumParamsPerNetwork<T> {
   [eEthereumNetwork.hardhat]: T;
   [eEthereumNetwork.arbitrumSepolia]: T;
+  [eEthereumNetwork.arbitrum]: T;
 }
 
 export interface iParamsPerPool<T> {
