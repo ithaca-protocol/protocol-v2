@@ -19,7 +19,6 @@ import {Errors} from '../libraries/helpers/Errors.sol';
 import {ValidationLogic} from '../libraries/logic/ValidationLogic.sol';
 import {DataTypes} from '../libraries/types/DataTypes.sol';
 import {LendingPoolStorage} from './LendingPoolStorage.sol';
-import {IIthacaFeed} from '../ithaca/IIthacaFeed.sol';
 
 /**
  * @title LendingPoolCollateralManager contract

@@ -11,8 +11,8 @@ import {WadRayMath} from '../math/WadRayMath.sol';
 import {PercentageMath} from '../math/PercentageMath.sol';
 import {IPriceOracleGetter} from '../../../interfaces/IPriceOracleGetter.sol';
 import {DataTypes} from '../types/DataTypes.sol';
-import {IIthacaFeed} from '../../ithaca/IIthacaFeed.sol';
-import {IFundlock} from '../../ithaca/IFundlock.sol';
+import {IIthacaFeed} from '../../../interfaces/ithaca/IIthacaFeed.sol';
+import {IFundlock} from '../../../interfaces/ithaca/IFundlock.sol';
 
 /**
  * @title GenericLogic library
