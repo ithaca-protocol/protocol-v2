@@ -41,16 +41,6 @@ task('full:deploy-oracles', 'Deploy oracles for dev enviroment')
       const fallbackOracleAddress = await getParamPerNetwork(FallbackOracle, network);
       const reserveAssets = await getParamPerNetwork(ReserveAssets, network);
       const chainlinkAggregators = await getParamPerNetwork(ChainlinkAggregator, network);
-      console.log(
-        !!lendingRateOracles,
-        !!addressesProvider,
-        !!admin,
-        !!aaveOracleAddress,
-        !!lendingRateOracleAddress,
-        !!fallbackOracleAddress,
-        !!reserveAssets,
-        !!chainlinkAggregators
-      );
 
       const tokensToWatch: SymbolMap<string> = {
         ...reserveAssets,
