@@ -250,20 +250,22 @@ library GenericLogic {
         vars.currentReserveAddress
       );
 
-      vars.compoundedLiquidityBalance = IFundlock(params.fundlock).balanceSheet(
-        user,
-        vars.currentReserveAddress
-      );
+      if (params.fundlock != address(0)) {
+        vars.compoundedLiquidityBalance = IFundlock(params.fundlock).balanceSheet(
+          user,
+          vars.currentReserveAddress
+        );
 
-      uint256 liquidityBalanceETH = vars.reserveUnitPrice.mul(vars.compoundedLiquidityBalance).div(
-        vars.tokenUnit
-      );
+        uint256 liquidityBalanceETH = vars
+          .reserveUnitPrice
+          .mul(vars.compoundedLiquidityBalance)
+          .div(vars.tokenUnit);
 
-      vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
+        vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
 
-      vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH);
-      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(liquidityBalanceETH);
-
+        vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH);
+        vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(liquidityBalanceETH);
+      }
       if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
         continue;
       }

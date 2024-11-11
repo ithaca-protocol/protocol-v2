@@ -53,11 +53,11 @@ contract LendingPoolCollateralManager is
     uint256 debtAmountNeeded;
     uint256 healthFactor;
     uint256 liquidatorPreviousATokenBalance;
+    uint256 ithacaCollateralToTransfer;
+    uint256 aTokenCollateralToTransfer;
     IAToken collateralAtoken;
     bool isCollateralEnabled;
     DataTypes.InterestRateMode borrowRateMode;
-    uint256 errorCode;
-    string errorMsg;
   }
 
   struct CollateralData {
@@ -116,7 +116,8 @@ contract LendingPoolCollateralManager is
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
-    (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
+    IthacaLiquidationCallReturnVars memory returnVars;
+    (returnVars.errorCode, returnVars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,
       userConfig,
@@ -126,10 +127,10 @@ contract LendingPoolCollateralManager is
       ithacaCollateralBalance
     );
 
-    IthacaLiquidationCallReturnVars memory returnVars;
-    if (Errors.CollateralManagerErrors(vars.errorCode) != Errors.CollateralManagerErrors.NO_ERROR) {
-      returnVars.errorCode = vars.errorCode;
-      returnVars.errorMsg = vars.errorMsg;
+    if (
+      Errors.CollateralManagerErrors(returnVars.errorCode) !=
+      Errors.CollateralManagerErrors.NO_ERROR
+    ) {
       return returnVars;
     }
 
@@ -145,26 +146,28 @@ contract LendingPoolCollateralManager is
       ? vars.maxLiquidatableDebt
       : debtToCover;
 
-    CollateralData memory collateralVars;
+    {
+      CollateralData memory collateralVars;
 
-    IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
+      IPriceOracleGetter oracle = IPriceOracleGetter(_addressesProvider.getPriceOracle());
 
-    collateralVars.price = oracle.getAssetPrice(collateralAsset);
+      collateralVars.price = oracle.getAssetPrice(collateralAsset);
 
-    (, , collateralVars.liquidationBonus, collateralVars.decimals, ) = collateralReserve
-      .configuration
-      .getParams();
+      (, , collateralVars.liquidationBonus, collateralVars.decimals, ) = collateralReserve
+        .configuration
+        .getParams();
 
-    (
-      vars.maxCollateralToLiquidate,
-      vars.debtAmountNeeded
-    ) = _calculateAvailableCollateralToLiquidate(
-      debtReserve,
-      debtAsset,
-      vars.actualDebtToLiquidate,
-      vars.userCollateralBalance.add(ithacaCollateralBalance),
-      collateralVars
-    );
+      (
+        vars.maxCollateralToLiquidate,
+        vars.debtAmountNeeded
+      ) = _calculateAvailableCollateralToLiquidate(
+        debtReserve,
+        debtAsset,
+        vars.actualDebtToLiquidate,
+        vars.userCollateralBalance.add(ithacaCollateralBalance),
+        collateralVars
+      );
+    }
 
     // If debtAmountNeeded < actualDebtToLiquidate, there isn't enough
     // collateral to cover the actual amount that is being liquidated, hence we liquidate
@@ -217,17 +220,23 @@ contract LendingPoolCollateralManager is
       0
     );
 
-    uint256 ithacaCollateralToTransfer;
-    uint256 aTokenCollateralToTransfer = vars.maxCollateralToLiquidate;
+    vars.ithacaCollateralToTransfer;
+    vars.aTokenCollateralToTransfer = vars.maxCollateralToLiquidate;
     if (vars.maxCollateralToLiquidate > vars.userCollateralBalance) {
-      ithacaCollateralToTransfer = vars.maxAmountCollateralToLiquidate - vars.userCollateralBalance;
-      aTokenCollateralToTransfer = vars.userCollateralBalance;
+      vars.ithacaCollateralToTransfer =
+        vars.maxAmountCollateralToLiquidate -
+        vars.userCollateralBalance;
+      vars.aTokenCollateralToTransfer = vars.userCollateralBalance;
     }
 
     if (vars.userCollateralBalance != 0) {
       if (receiveAToken) {
         vars.liquidatorPreviousATokenBalance = IERC20(vars.collateralAtoken).balanceOf(msg.sender);
-        vars.collateralAtoken.transferOnLiquidation(user, msg.sender, aTokenCollateralToTransfer);
+        vars.collateralAtoken.transferOnLiquidation(
+          user,
+          msg.sender,
+          vars.aTokenCollateralToTransfer
+        );
 
         if (vars.liquidatorPreviousATokenBalance == 0) {
           DataTypes.UserConfigurationMap storage liquidatorConfig = _usersConfig[msg.sender];
@@ -240,14 +249,14 @@ contract LendingPoolCollateralManager is
           collateralAsset,
           address(vars.collateralAtoken),
           0,
-          aTokenCollateralToTransfer
+          vars.aTokenCollateralToTransfer
         );
 
         // Burn the equivalent amount of aToken, sending the underlying to the liquidator
         vars.collateralAtoken.burn(
           user,
           msg.sender,
-          aTokenCollateralToTransfer,
+          vars.aTokenCollateralToTransfer,
           collateralReserve.liquidityIndex
         );
       }
@@ -255,7 +264,7 @@ contract LendingPoolCollateralManager is
 
     // If the collateral being liquidated is equal to the user balance,
     // we set the currency as not being used as collateral anymore
-    if (aTokenCollateralToTransfer == vars.userCollateralBalance) {
+    if (vars.aTokenCollateralToTransfer == vars.userCollateralBalance) {
       userConfig.setUsingAsCollateral(collateralReserve.id, false);
       emit ReserveUsedAsCollateralDisabled(collateralAsset, user);
     }
@@ -278,7 +287,7 @@ contract LendingPoolCollateralManager is
     );
 
     returnVars.debtLiquidated = vars.actualDebtToLiquidate;
-    returnVars.ithacaCollateralLiquidated = ithacaCollateralToTransfer;
+    returnVars.ithacaCollateralLiquidated = vars.ithacaCollateralToTransfer;
     returnVars.errorCode = uint256(Errors.CollateralManagerErrors.NO_ERROR);
     returnVars.errorMsg = Errors.LPCM_NO_ERRORS;
     return returnVars;
@@ -322,7 +331,8 @@ contract LendingPoolCollateralManager is
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
-    (vars.errorCode, vars.errorMsg) = ValidationLogic.validateLiquidationCall(
+    IthacaLiquidationCallReturnVars memory returnVars;
+    (returnVars.errorCode, returnVars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,
       userConfig,
@@ -332,11 +342,10 @@ contract LendingPoolCollateralManager is
       ithacaCollateralBalance
     );
 
-    IthacaLiquidationCallReturnVars memory returnVars;
-
-    if (Errors.CollateralManagerErrors(vars.errorCode) != Errors.CollateralManagerErrors.NO_ERROR) {
-      returnVars.errorCode = vars.errorCode;
-      returnVars.errorMsg = vars.errorMsg;
+    if (
+      Errors.CollateralManagerErrors(returnVars.errorCode) !=
+      Errors.CollateralManagerErrors.NO_ERROR
+    ) {
       return returnVars;
     }
 
