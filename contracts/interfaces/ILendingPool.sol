@@ -314,6 +314,8 @@ interface ILendingPool {
     uint16 referralCode
   ) external;
 
+  function validateIthacaWithdraw(address user, address asset, uint256 amount) external view;
+
   /**
    * @dev Returns the user account data across all the reserves
    * @param user The address of the user

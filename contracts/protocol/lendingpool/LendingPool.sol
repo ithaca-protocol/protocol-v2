@@ -596,6 +596,26 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
+  function validateIthacaWithdraw(
+    address user,
+    address asset,
+    uint256 amount
+  ) external view override {
+    require(
+      GenericLogic.ithacaBalanceDecreaseAllowed(
+        asset,
+        user,
+        amount,
+        _reserves,
+        _usersConfig[user],
+        _reservesList,
+        _reservesCount,
+        _getIthacaCollateralParams()
+      ),
+      Errors.VL_TRANSFER_NOT_ALLOWED
+    );
+  }
+
   /**
    * @dev Returns the state and configuration of the reserve
    * @param asset The address of the underlying asset of the reserve
