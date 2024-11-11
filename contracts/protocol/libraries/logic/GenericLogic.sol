@@ -139,9 +139,7 @@ library GenericLogic {
   struct Params {
     address oracle;
     address ithacafeed;
-    uint256 ltv;
-    uint256 liquidationBonus;
-    uint256 liquidationThreshold;
+    address fundlock;
   }
 
   /**
@@ -211,15 +209,13 @@ library GenericLogic {
       }
     }
 
-    uint256 ithacaCollateral = _getIthacaCollateral(user, vars, params.ithacafeed);
+    uint256 ithacaCollateral = _getIthacaCollateral(user, params.ithacafeed);
 
     // 100% ltv, liquidation threshold
     if (ithacaCollateral > 0) {
       vars.totalCollateralInETH = vars.totalCollateralInETH.add(ithacaCollateral);
-      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
-        ithacaCollateral.mul(params.liquidationThreshold)
-      );
-      vars.avgLtv = vars.avgLtv.add(ithacaCollateral.mul(params.ltv));
+      vars.avgLtv = vars.avgLtv.add(ithacaCollateral);
+      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(ithacaCollateral);
     }
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
@@ -241,11 +237,7 @@ library GenericLogic {
     );
   }
 
-  function _getIthacaCollateral(
-    address user,
-    CalculateUserAccountDataVars memory vars,
-    address ithacaFeed
-  ) internal view returns (uint256) {
+  function _getIthacaCollateral(address user, address ithacaFeed) internal view returns (uint256) {
     IIthacaFeed.ClientParams memory params = IIthacaFeed(ithacaFeed).getClientData(user);
 
     int256 netCollateral = (int256(params.collateral) +

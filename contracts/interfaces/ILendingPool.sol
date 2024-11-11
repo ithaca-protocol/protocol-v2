@@ -353,8 +353,6 @@ interface ILendingPool {
 
   function setConfiguration(address reserve, uint256 configuration) external;
 
-  function configureIthacaCollateral(DataTypes.IthacaCollateralParams memory params) external;
-
   /**
    * @dev Returns the configuration of the reserve
    * @param asset The address of the underlying asset of the reserve

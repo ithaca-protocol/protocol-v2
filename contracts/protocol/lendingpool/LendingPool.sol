@@ -858,12 +858,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
-  function configureIthacaCollateral(
-    DataTypes.IthacaCollateralParams memory params
-  ) external override onlyLendingPoolConfigurator {
-    _ithacaCollateralParams = params;
-  }
-
   struct ExecuteBorrowParams {
     address asset;
     address user;
@@ -880,7 +874,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[vars.onBehalfOf];
 
     address oracle = _addressesProvider.getPriceOracle();
-    address ithacaFeed = _addressesProvider.getIthacaFeedOracle();
 
     uint256 amountInETH = IPriceOracleGetter(oracle).getAssetPrice(vars.asset).mul(vars.amount).div(
       10 ** reserve.configuration.getDecimals()
@@ -965,9 +958,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       GenericLogic.Params(
         _addressesProvider.getPriceOracle(),
         _addressesProvider.getIthacaFeedOracle(),
-        _ithacaCollateralParams.ltv,
-        _ithacaCollateralParams.liquidationBonus,
-        _ithacaCollateralParams.liquidationThreshold
+        _addressesProvider.getFundLock()
       );
   }
 

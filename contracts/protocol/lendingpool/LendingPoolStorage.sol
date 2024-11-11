@@ -29,6 +29,4 @@ contract LendingPoolStorage {
   uint256 internal _flashLoanPremiumTotal;
 
   uint256 internal _maxNumberOfReserves;
-
-  DataTypes.IthacaCollateralParams internal _ithacaCollateralParams;
 }

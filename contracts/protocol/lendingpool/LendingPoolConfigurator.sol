@@ -318,31 +318,6 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
     emit CollateralConfigurationChanged(asset, ltv, liquidationThreshold, liquidationBonus);
   }
 
-  function configureIthacaCollateral(
-    uint256 ltv,
-    uint256 liquidationThreshold,
-    uint256 liquidationBonus
-  ) external onlyPoolAdmin {
-    DataTypes.IthacaCollateralParams memory params;
-    //validation of the parameters: the LTV can
-    //only be lower or equal than the liquidation threshold
-    //(otherwise a loan against the asset would cause instantaneous liquidation)
-    require(ltv <= liquidationThreshold, Errors.LPC_INVALID_CONFIGURATION);
-
-    require(liquidationThreshold != 0, Errors.LPC_INVALID_CONFIGURATION);
-    //liquidation bonus must be bigger than 100.00%, otherwise the liquidator would receive less
-    //collateral than needed to cover the debt
-    require(liquidationBonus > PercentageMath.PERCENTAGE_FACTOR, Errors.LPC_INVALID_CONFIGURATION);
-
-    params.ltv = ltv;
-    params.liquidationBonus = liquidationBonus;
-    params.liquidationThreshold = liquidationThreshold;
-
-    pool.configureIthacaCollateral(params);
-
-    emit IthacaCollateralConfigurationChanged(ltv, liquidationThreshold, liquidationBonus);
-  }
-
   /**
    * @dev Enable stable rate borrowing on a reserve
    * @param asset The address of the underlying asset of the reserve
