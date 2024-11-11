@@ -94,7 +94,7 @@ contract LendingPoolCollateralManager is
     uint256 debtToCover,
     bool receiveAToken,
     uint256 ithacaCollateralBalance
-  ) external override returns (IthacaLiquidationCallReturnVars memory) {
+  ) external override returns (DataTypes.LiquidationCallReturnVars memory) {
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
@@ -116,7 +116,7 @@ contract LendingPoolCollateralManager is
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
-    IthacaLiquidationCallReturnVars memory returnVars;
+    DataTypes.LiquidationCallReturnVars memory returnVars;
     (returnVars.errorCode, returnVars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,
@@ -309,7 +309,7 @@ contract LendingPoolCollateralManager is
     address user,
     uint256 debtToCover,
     uint256 ithacaCollateralBalance
-  ) external override returns (IthacaLiquidationCallReturnVars memory) {
+  ) external override returns (DataTypes.LiquidationCallReturnVars memory) {
     DataTypes.ReserveData storage collateralReserve = _reserves[collateralAsset];
     DataTypes.ReserveData storage debtReserve = _reserves[debtAsset];
     DataTypes.UserConfigurationMap storage userConfig = _usersConfig[user];
@@ -331,7 +331,7 @@ contract LendingPoolCollateralManager is
 
     (vars.userStableDebt, vars.userVariableDebt) = Helpers.getUserCurrentDebt(user, debtReserve);
 
-    IthacaLiquidationCallReturnVars memory returnVars;
+    DataTypes.LiquidationCallReturnVars memory returnVars;
     (returnVars.errorCode, returnVars.errorMsg) = ValidationLogic.validateLiquidationCall(
       collateralReserve,
       debtReserve,

@@ -49,7 +49,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   using PercentageMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant LENDINGPOOL_REVISION = 0x2;
+  uint256 public constant LENDINGPOOL_REVISION = 0x1;
 
   modifier whenNotPaused() {
     _whenNotPaused();
@@ -83,7 +83,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    *   on subsequent operations
    * @param provider The address of the LendingPoolAddressesProvider
    **/
-  function initialize(ILendingPoolAddressesProvider provider) public initializer {
+  function initialize(ILendingPoolAddressesProvider provider) external initializer {
     _addressesProvider = provider;
     _maxStableRateBorrowSizePercent = 2500;
     _flashLoanPremiumTotal = 9;
@@ -449,9 +449,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    IthacaLiquidationCallReturnVars memory returnVars = abi.decode(
+    DataTypes.LiquidationCallReturnVars memory returnVars = abi.decode(
       result,
-      (IthacaLiquidationCallReturnVars)
+      (DataTypes.LiquidationCallReturnVars)
     );
 
     require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
@@ -493,9 +493,9 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    IthacaLiquidationCallReturnVars memory returnVars = abi.decode(
+    DataTypes.LiquidationCallReturnVars memory returnVars = abi.decode(
       result,
-      (IthacaLiquidationCallReturnVars)
+      (DataTypes.LiquidationCallReturnVars)
     );
 
     require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
@@ -613,26 +613,6 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         referralCode
       );
     }
-  }
-
-  function validateIthacaWithdraw(
-    address user,
-    address asset,
-    uint256 amount
-  ) external view override {
-    require(
-      GenericLogic.ithacaBalanceDecreaseAllowed(
-        asset,
-        user,
-        amount,
-        _reserves,
-        _usersConfig[user],
-        _reservesList,
-        _reservesCount,
-        _getIthacaCollateralParams()
-      ),
-      Errors.VL_TRANSFER_NOT_ALLOWED
-    );
   }
 
   /**
@@ -766,21 +746,21 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Returns the percentage of available liquidity that can be borrowed at once at stable rate
    */
-  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() public view returns (uint256) {
+  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() external view returns (uint256) {
     return _maxStableRateBorrowSizePercent;
   }
 
   /**
    * @dev Returns the fee on flash loans
    */
-  function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint256) {
+  function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint256) {
     return _flashLoanPremiumTotal;
   }
 
   /**
    * @dev Returns the maximum number of reserves supported to be listed in this LendingPool
    */
-  function MAX_NUMBER_RESERVES() public view returns (uint256) {
+  function MAX_NUMBER_RESERVES() external view returns (uint256) {
     return _maxNumberOfReserves;
   }
 

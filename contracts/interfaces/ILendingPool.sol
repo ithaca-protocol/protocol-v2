@@ -6,13 +6,6 @@ import {ILendingPoolAddressesProvider} from './ILendingPoolAddressesProvider.sol
 import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 
 interface ILendingPool {
-  struct IthacaLiquidationCallReturnVars {
-    uint256 debtLiquidated;
-    uint256 ithacaCollateralLiquidated;
-    uint256 errorCode;
-    string errorMsg;
-  }
-
   /**
    * @dev Emitted on deposit()
    * @param reserve The address of the underlying asset of the reserve
@@ -332,8 +325,6 @@ interface ILendingPool {
     bytes calldata params,
     uint16 referralCode
   ) external;
-
-  function validateIthacaWithdraw(address user, address asset, uint256 amount) external view;
 
   /**
    * @dev Returns the user account data across all the reserves

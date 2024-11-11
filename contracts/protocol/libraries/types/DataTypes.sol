@@ -50,4 +50,11 @@ library DataTypes {
     STABLE,
     VARIABLE
   }
+
+  struct LiquidationCallReturnVars {
+    uint256 debtLiquidated;
+    uint256 ithacaCollateralLiquidated;
+    uint256 errorCode;
+    string errorMsg;
+  }
 }

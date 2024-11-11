@@ -2,19 +2,14 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
+import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
+
 /**
  * @title ILendingPoolCollateralManager
  * @author Aave
  * @notice Defines the actions involving management of collateral in the protocol.
  **/
 interface ILendingPoolCollateralManager {
-  struct IthacaLiquidationCallReturnVars {
-    uint256 debtLiquidated;
-    uint256 ithacaCollateralLiquidated;
-    uint256 errorCode;
-    string errorMsg;
-  }
-
   /**
    * @dev Emitted when a borrower is liquidated
    * @param collateral The address of the collateral being liquidated
@@ -65,7 +60,7 @@ interface ILendingPoolCollateralManager {
     uint256 debtToCover,
     bool receiveAToken,
     uint256 ithacaCollateralBalance
-  ) external returns (IthacaLiquidationCallReturnVars memory);
+  ) external returns (DataTypes.LiquidationCallReturnVars memory);
 
   /**
    * @dev Ithaca fundlock can invoke this function to liquidate an undercollateralized position.
@@ -81,5 +76,5 @@ interface ILendingPoolCollateralManager {
     address user,
     uint256 debtToCover,
     uint256 ithacaCollateralBalance
-  ) external returns (IthacaLiquidationCallReturnVars memory);
+  ) external returns (DataTypes.LiquidationCallReturnVars memory);
 }
