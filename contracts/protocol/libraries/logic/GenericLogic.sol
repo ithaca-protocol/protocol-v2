@@ -189,8 +189,10 @@ library GenericLogic {
 
         vars.totalCollateralInETH = vars.totalCollateralInETH.add(liquidityBalanceETH);
 
-        vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH);
-        vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(liquidityBalanceETH);
+        vars.avgLtv = vars.avgLtv.add(liquidityBalanceETH.mul(10000));
+        vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(
+          liquidityBalanceETH.mul(10000)
+        );
       }
       if (!userConfig.isUsingAsCollateralOrBorrowing(vars.i)) {
         continue;
@@ -231,8 +233,8 @@ library GenericLogic {
     // 100% ltv, liquidation threshold
     if (ithacaCollateral > 0) {
       vars.totalCollateralInETH = vars.totalCollateralInETH.add(ithacaCollateral);
-      vars.avgLtv = vars.avgLtv.add(ithacaCollateral);
-      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(ithacaCollateral);
+      vars.avgLtv = vars.avgLtv.add(ithacaCollateral.mul(10000));
+      vars.avgLiquidationThreshold = vars.avgLiquidationThreshold.add(ithacaCollateral.mul(10000));
     }
 
     vars.avgLtv = vars.totalCollateralInETH > 0 ? vars.avgLtv.div(vars.totalCollateralInETH) : 0;
