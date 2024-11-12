@@ -15,6 +15,7 @@ import {
   MintableERC20Factory,
   MockATokenFactory,
   MockFlashLoanReceiverFactory,
+  MockFundlockFactory,
   MockIthacaFeedFactory,
   MockStableDebtTokenFactory,
   MockVariableDebtTokenFactory,
@@ -296,6 +297,12 @@ export const getWETHGateway = async (address?: tEthereumAddress) =>
 export const getIthacaFeed = async (address?: tEthereumAddress) =>
   await MockIthacaFeedFactory.connect(
     address || (await getDb().get(`${eContractid.IthacaFeed}.${DRE.network.name}`).value()).address,
+    await getFirstSigner()
+  );
+
+export const getFundlock = async (address?: tEthereumAddress) =>
+  await MockFundlockFactory.connect(
+    address || (await getDb().get(`${eContractid.Fundlock}.${DRE.network.name}`).value()).address,
     await getFirstSigner()
   );
 

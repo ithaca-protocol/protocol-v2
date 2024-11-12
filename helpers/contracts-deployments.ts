@@ -49,6 +49,7 @@ import {
   UiIncentiveDataProviderV2V3,
   UiIncentiveDataProviderV2Factory,
   MockIthacaFeedFactory,
+  MockFundlockFactory,
 } from '../types';
 import {
   withSaveAndVerify,
@@ -647,6 +648,14 @@ export const deployMockIthacaFeed = async (verify?: boolean) =>
   withSaveAndVerify(
     await new MockIthacaFeedFactory(await getFirstSigner()).deploy(),
     eContractid.IthacaFeed,
+    [],
+    verify
+  );
+
+export const deployMockFundlock = async (lendingPool: tEthereumAddress, verify?: boolean) =>
+  withSaveAndVerify(
+    await new MockFundlockFactory(await getFirstSigner()).deploy(lendingPool),
+    eContractid.Fundlock,
     [],
     verify
   );

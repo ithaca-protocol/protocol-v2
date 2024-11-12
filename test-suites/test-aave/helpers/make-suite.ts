@@ -12,6 +12,7 @@ import {
   getWETHMocked,
   getWETHGateway,
   getIthacaFeed,
+  getFundlock,
 } from '../../../helpers/contracts-getters';
 import { eNetwork, tEthereumAddress } from '../../../helpers/types';
 import { LendingPool } from '../../../types/LendingPool';
@@ -33,7 +34,7 @@ import { WETH9Mocked } from '../../../types/WETH9Mocked';
 import { WETHGateway } from '../../../types/WETHGateway';
 import { solidity } from 'ethereum-waffle';
 import { AaveConfig } from '../../../markets/aave';
-import { MockIthacaFeed } from '../../../types';
+import { MockFundlock, MockIthacaFeed } from '../../../types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 chai.use(bignumberChai());
@@ -61,6 +62,7 @@ export interface TestEnv {
   registry: LendingPoolAddressesProviderRegistry;
   wethGateway: WETHGateway;
   ithacaFeed: MockIthacaFeed;
+  fundlock: MockFundlock;
 }
 
 let snapshotId: string = '0x1';
@@ -85,6 +87,7 @@ const testEnv: TestEnv = {
   registry: {} as LendingPoolAddressesProviderRegistry,
   wethGateway: {} as WETHGateway,
   ithacaFeed: {} as MockIthacaFeed,
+  fundlock: {} as MockFundlock,
 } as TestEnv;
 
 export async function initializeMakeSuite() {
@@ -147,6 +150,7 @@ export async function initializeMakeSuite() {
   testEnv.wethGateway = await getWETHGateway();
 
   testEnv.ithacaFeed = await getIthacaFeed();
+  testEnv.fundlock = await getFundlock();
 }
 
 const setSnapshot = async () => {

@@ -26,6 +26,7 @@ import {
   deployATokenImplementations,
   deployAaveOracle,
   deployMockIthacaFeed,
+  deployMockFundlock,
 } from '../../helpers/contracts-deployments';
 import { Signer } from 'ethers';
 import { TokenContractId, eContractid, tEthereumAddress, AavePools } from '../../helpers/types';
@@ -128,11 +129,6 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
 
   const lendingPoolConfiguratorProxy = await getLendingPoolConfiguratorProxy(
     await addressesProvider.getLendingPoolConfigurator()
-  );
-
-  await waitForTx(
-    // ltv, threshold, bonus
-    await lendingPoolConfiguratorProxy.configureIthacaCollateral(10000, 10000, 10050)
   );
 
   await insertContractAddressInDb(
@@ -246,8 +242,10 @@ const buildTestEnv = async (deployer: Signer, secondaryWallet: Signer) => {
   await deployMockFlashLoanReceiver(addressesProvider.address);
 
   const ithacaFeed = await deployMockIthacaFeed();
-
   await waitForTx(await addressesProvider.setIthacaFeedOracle(ithacaFeed.address));
+
+  const fundlock = await deployMockFundlock(lendingPoolAddress);
+  await waitForTx(await addressesProvider.setFundLock(fundlock.address));
 
   await deployWalletBalancerProvider();
 

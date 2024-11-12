@@ -69,6 +69,7 @@ export enum eContractid {
   UiIncentiveDataProviderV2V3 = 'UiIncentiveDataProviderV2V3',
   UiIncentiveDataProviderV2 = 'UiIncentiveDataProviderV2',
   IthacaFeed = 'MockIthacaFeed',
+  Fundlock = 'MockFundlock',
 }
 
 /*
