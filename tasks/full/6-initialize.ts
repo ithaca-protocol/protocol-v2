@@ -104,6 +104,12 @@ task('full:initialize-lending-pool', 'Initialize lending pool configuration.')
 
       await waitForTx(await addressesProvider.setIthacaFeedOracle(process.env.ITHACA_FEED));
 
+      if (!process.env.FUNDLOCK) {
+        throw new Error('FUNDLOCK not provided');
+      }
+
+      await waitForTx(await addressesProvider.setFundLock(process.env.FUNDLOCK));
+
       await deployWalletBalancerProvider(verify);
 
       const lendingPoolAddress = await addressesProvider.getLendingPool();
