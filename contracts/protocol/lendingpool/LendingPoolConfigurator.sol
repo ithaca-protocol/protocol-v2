@@ -296,6 +296,7 @@ contract LendingPoolConfigurator is VersionedInitializable, ILendingPoolConfigur
 
       //if threshold * bonus is less than PERCENTAGE_FACTOR, it's guaranteed that at the moment
       //a loan is taken there is enough collateral available to cover the liquidation bonus
+
       require(
         liquidationThreshold.percentMul(liquidationBonus) <= PercentageMath.PERCENTAGE_FACTOR,
         Errors.LPC_INVALID_CONFIGURATION

@@ -8,9 +8,7 @@ import {
 } from './types';
 import { getEthersSignersAddresses, getParamPerPool } from './contracts-helpers';
 import AaveConfig from '../markets/aave';
-import MaticConfig from '../markets/matic';
-import AvalancheConfig from '../markets/avalanche';
-import AmmConfig from '../markets/amm';
+import IthacaArbitrumConfig from '../markets/ithaca-arbitrum';
 
 import { CommonsConfig } from '../markets/aave/commons';
 import { DRE, filterMapBy } from './misc-utils';
@@ -21,21 +19,15 @@ import { deployWETHMocked } from './contracts-deployments';
 export enum ConfigNames {
   Commons = 'Commons',
   Aave = 'Aave',
-  Matic = 'Matic',
-  Amm = 'Amm',
-  Avalanche = 'Avalanche',
+  IthacaArbitrum = 'IthacaArbitrum',
 }
 
 export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
   switch (configName) {
+    case ConfigNames.IthacaArbitrum:
+      return IthacaArbitrumConfig;
     case ConfigNames.Aave:
       return AaveConfig;
-    case ConfigNames.Matic:
-      return MaticConfig;
-    case ConfigNames.Amm:
-      return AmmConfig;
-    case ConfigNames.Avalanche:
-      return AvalancheConfig;
     case ConfigNames.Commons:
       return CommonsConfig;
     default:
@@ -54,17 +46,11 @@ export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
 export const getReservesConfigByPool = (pool: AavePools): iMultiPoolsAssets<IReserveParams> =>
   getParamPerPool<iMultiPoolsAssets<IReserveParams>>(
     {
+      [AavePools.ithacaArbitrum]: {
+        ...IthacaArbitrumConfig.ReservesConfig,
+      },
       [AavePools.proto]: {
         ...AaveConfig.ReservesConfig,
-      },
-      [AavePools.amm]: {
-        ...AmmConfig.ReservesConfig,
-      },
-      [AavePools.matic]: {
-        ...MaticConfig.ReservesConfig,
-      },
-      [AavePools.avalanche]: {
-        ...AvalancheConfig.ReservesConfig,
       },
     },
     pool

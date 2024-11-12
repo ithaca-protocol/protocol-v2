@@ -1,9 +1,7 @@
 pragma solidity 0.6.12;
 pragma experimental ABIEncoderV2;
 
-import {
-  UserConfiguration
-} from '../../contracts/protocol/libraries/configuration/UserConfiguration.sol';
+import {UserConfiguration} from '../../contracts/protocol/libraries/configuration/UserConfiguration.sol';
 import {DataTypes} from '../../contracts/protocol/libraries/types/DataTypes.sol';
 
 /*
@@ -34,10 +32,6 @@ contract UserConfigurationHarness {
 
   function isBorrowingAny() public view returns (bool) {
     return UserConfiguration.isBorrowingAny(usersConfig);
-  }
-
-  function isEmpty() public view returns (bool) {
-    return UserConfiguration.isEmpty(usersConfig);
   }
 
   /*

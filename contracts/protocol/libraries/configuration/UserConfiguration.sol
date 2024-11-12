@@ -97,13 +97,4 @@ library UserConfiguration {
   function isBorrowingAny(DataTypes.UserConfigurationMap memory self) internal pure returns (bool) {
     return self.data & BORROWING_MASK != 0;
   }
-
-  /**
-   * @dev Used to validate if a user has not been using any reserve
-   * @param self The configuration object
-   * @return True if the user has been borrowing any reserve, false otherwise
-   **/
-  function isEmpty(DataTypes.UserConfigurationMap memory self) internal pure returns (bool) {
-    return self.data == 0;
-  }
 }

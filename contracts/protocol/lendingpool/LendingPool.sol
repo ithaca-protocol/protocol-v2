@@ -49,7 +49,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   using PercentageMath for uint256;
   using SafeERC20 for IERC20;
 
-  uint256 public constant LENDINGPOOL_REVISION = 0x2;
+  uint256 public constant LENDINGPOOL_REVISION = 0x1;
 
   modifier whenNotPaused() {
     _whenNotPaused();
@@ -83,7 +83,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    *   on subsequent operations
    * @param provider The address of the LendingPoolAddressesProvider
    **/
-  function initialize(ILendingPoolAddressesProvider provider) public initializer {
+  function initialize(ILendingPoolAddressesProvider provider) external initializer {
     _addressesProvider = provider;
     _maxStableRateBorrowSizePercent = 2500;
     _flashLoanPremiumTotal = 9;
@@ -164,7 +164,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     reserve.updateState();
@@ -399,7 +399,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[msg.sender],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     _usersConfig[msg.sender].setUsingAsCollateral(reserve.id, useAsCollateral);
@@ -421,33 +421,86 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
    * to receive the underlying collateral asset directly
+   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
    **/
   function liquidationCall(
     address collateralAsset,
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
-  ) external override whenNotPaused {
+    bool receiveAToken,
+    uint256 ithacaCollateralBalance
+  ) external override whenNotPaused returns (uint256, uint256) {
+    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidationCall(address,address,address,uint256,bool)',
+        'liquidationCall(address,address,address,uint256,bool,uint256)',
         collateralAsset,
         debtAsset,
         user,
         debtToCover,
-        receiveAToken
+        receiveAToken,
+        ithacaCollateralBalance
       )
     );
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
+    DataTypes.LiquidationCallReturnVars memory returnVars = abi.decode(
+      result,
+      (DataTypes.LiquidationCallReturnVars)
+    );
 
-    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
+    require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
+
+    return (returnVars.debtLiquidated, returnVars.ithacaCollateralLiquidated);
+  }
+
+  /**
+   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1
+   * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
+   *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
+   * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
+   * @param debtAsset The address of the underlying borrowed asset to be repaid with the liquidation
+   * @param user The address of the borrower getting liquidated
+   * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
+   * @param currentAvailableCollateral The amount deposited as collateral in Ithaca
+   **/
+  function ithacaLiquidationCall(
+    address collateralAsset,
+    address debtAsset,
+    address user,
+    uint256 debtToCover,
+    uint256 currentAvailableCollateral
+  ) external override whenNotPaused returns (uint256, uint256) {
+    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
+    address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
+
+    //solium-disable-next-line
+    (bool success, bytes memory result) = collateralManager.delegatecall(
+      abi.encodeWithSignature(
+        'ithacaLiquidationCall(address,address,address,uint256,uint256)',
+        collateralAsset,
+        debtAsset,
+        user,
+        debtToCover,
+        currentAvailableCollateral
+      )
+    );
+
+    require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
+
+    DataTypes.LiquidationCallReturnVars memory returnVars = abi.decode(
+      result,
+      (DataTypes.LiquidationCallReturnVars)
+    );
+
+    require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
+
+    return (returnVars.debtLiquidated, returnVars.ithacaCollateralLiquidated);
   }
 
   struct FlashLoanLocalVars {
@@ -610,7 +663,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[user],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     availableBorrowsETH = GenericLogic.calculateAvailableBorrowsETH(
@@ -693,21 +746,21 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   /**
    * @dev Returns the percentage of available liquidity that can be borrowed at once at stable rate
    */
-  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() public view returns (uint256) {
+  function MAX_STABLE_RATE_BORROW_SIZE_PERCENT() external view returns (uint256) {
     return _maxStableRateBorrowSizePercent;
   }
 
   /**
    * @dev Returns the fee on flash loans
    */
-  function FLASHLOAN_PREMIUM_TOTAL() public view returns (uint256) {
+  function FLASHLOAN_PREMIUM_TOTAL() external view returns (uint256) {
     return _flashLoanPremiumTotal;
   }
 
   /**
    * @dev Returns the maximum number of reserves supported to be listed in this LendingPool
    */
-  function MAX_NUMBER_RESERVES() public view returns (uint256) {
+  function MAX_NUMBER_RESERVES() external view returns (uint256) {
     return _maxNumberOfReserves;
   }
 
@@ -737,7 +790,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
       _usersConfig[from],
       _reservesList,
       _reservesCount,
-      _addressesProvider.getPriceOracle()
+      _getIthacaCollateralParams()
     );
 
     uint256 reserveId = _reserves[asset].id;
@@ -848,16 +901,22 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     ValidationLogic.validateBorrow(
       vars.asset,
       reserve,
-      vars.onBehalfOf,
-      vars.amount,
-      amountInETH,
-      vars.interestRateMode,
-      _maxStableRateBorrowSizePercent,
+      ValidationLogic.BorrowParams(
+        vars.onBehalfOf,
+        vars.amount,
+        amountInETH,
+        vars.interestRateMode,
+        _maxStableRateBorrowSizePercent
+      ),
       _reserves,
       userConfig,
       _reservesList,
       _reservesCount,
-      oracle
+      GenericLogic.Params(
+        oracle,
+        _addressesProvider.getIthacaFeedOracle(),
+        _addressesProvider.getFundLock()
+      )
     );
 
     reserve.updateState();
@@ -909,6 +968,15 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
         : reserve.currentVariableBorrowRate,
       vars.referralCode
     );
+  }
+
+  function _getIthacaCollateralParams() internal view returns (GenericLogic.Params memory) {
+    return
+      GenericLogic.Params(
+        _addressesProvider.getPriceOracle(),
+        _addressesProvider.getIthacaFeedOracle(),
+        _addressesProvider.getFundLock()
+      );
   }
 
   function _addReserveToList(address asset) internal {

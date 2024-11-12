@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: agpl-3.0
 pragma solidity 0.6.12;
+pragma experimental ABIEncoderV2;
+
+import {DataTypes} from '../protocol/libraries/types/DataTypes.sol';
 
 /**
  * @title ILendingPoolCollateralManager
@@ -55,6 +58,23 @@ interface ILendingPoolCollateralManager {
     address principal,
     address user,
     uint256 debtToCover,
-    bool receiveAToken
-  ) external returns (uint256, string memory);
+    bool receiveAToken,
+    uint256 ithacaCollateralBalance
+  ) external returns (DataTypes.LiquidationCallReturnVars memory);
+
+  /**
+   * @dev Ithaca fundlock can invoke this function to liquidate an undercollateralized position.
+   * @param collateral The address of the collateral to liquidated
+   * @param principal The address of the principal reserve
+   * @param user The address of the borrower
+   * @param debtToCover The amount of principal that the liquidator wants to repay
+   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
+   **/
+  function ithacaLiquidationCall(
+    address collateral,
+    address principal,
+    address user,
+    uint256 debtToCover,
+    uint256 ithacaCollateralBalance
+  ) external returns (DataTypes.LiquidationCallReturnVars memory);
 }
