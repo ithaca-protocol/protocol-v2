@@ -7,7 +7,7 @@ import { getLendingPoolConfiguratorProxy } from '../../helpers/contracts-getters
 task('full:deploy', 'Deploy development enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
   .setAction(async ({ verify }, DRE) => {
-    const POOL_NAME = ConfigNames.Aave;
+    const POOL_NAME = ConfigNames.IthacaArbitrum;
     await DRE.run('set-DRE');
 
     await DRE.run('set-DRE');

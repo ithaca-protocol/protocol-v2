@@ -8,6 +8,7 @@ import {
 } from './types';
 import { getEthersSignersAddresses, getParamPerPool } from './contracts-helpers';
 import AaveConfig from '../markets/aave';
+import IthacaArbitrumConfig from '../markets/ithaca-arbitrum';
 
 import { CommonsConfig } from '../markets/aave/commons';
 import { DRE, filterMapBy } from './misc-utils';
@@ -18,10 +19,13 @@ import { deployWETHMocked } from './contracts-deployments';
 export enum ConfigNames {
   Commons = 'Commons',
   Aave = 'Aave',
+  IthacaArbitrum = 'IthacaArbitrum',
 }
 
 export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
   switch (configName) {
+    case ConfigNames.IthacaArbitrum:
+      return IthacaArbitrumConfig;
     case ConfigNames.Aave:
       return AaveConfig;
     case ConfigNames.Commons:
@@ -42,6 +46,9 @@ export const loadPoolConfig = (configName: ConfigNames): PoolConfiguration => {
 export const getReservesConfigByPool = (pool: AavePools): iMultiPoolsAssets<IReserveParams> =>
   getParamPerPool<iMultiPoolsAssets<IReserveParams>>(
     {
+      [AavePools.ithacaArbitrum]: {
+        ...IthacaArbitrumConfig.ReservesConfig,
+      },
       [AavePools.proto]: {
         ...AaveConfig.ReservesConfig,
       },

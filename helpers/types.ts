@@ -19,6 +19,7 @@ export enum EthereumNetworkNames {
 
 export enum AavePools {
   proto = 'proto',
+  ithacaArbitrum = 'ithacaArbitrum',
 }
 
 export enum eContractid {
@@ -199,6 +200,8 @@ export type iAavePoolAssets<T> = Pick<
   'USDC' | 'WETH' | 'DAI' | 'AAVE' | 'LINK'
 >;
 
+export type iIthacaArbitrumPoolAssets<T> = Pick<iAssetsWithoutUSD<T>, 'USDC' | 'WETH'>;
+
 export type iMultiPoolsAssets<T> = iAssetCommon<T> | iAavePoolAssets<T>;
 
 export type iAavePoolTokens<T> = Omit<iAavePoolAssets<T>, 'ETH'>;
@@ -263,6 +266,7 @@ export interface iEthereumParamsPerNetwork<T> {
 
 export interface iParamsPerPool<T> {
   [AavePools.proto]: T;
+  [AavePools.ithacaArbitrum]: T;
 }
 
 export interface iBasicDistributionParams {
@@ -344,6 +348,10 @@ export interface ICommonConfiguration extends IBaseConfiguration {
 
 export interface IAaveConfiguration extends ICommonConfiguration {
   ReservesConfig: iAavePoolAssets<IReserveParams>;
+}
+
+export interface IIthacaArbitrumConfiguration extends ICommonConfiguration {
+  ReservesConfig: iIthacaArbitrumPoolAssets<IReserveParams>;
 }
 
 export interface ITokenAddress {

@@ -162,8 +162,13 @@ export const getOptionalParamAddressPerNetwork = (
   return getParamPerNetwork(param, network);
 };
 
-export const getParamPerPool = <T>({ proto }: iParamsPerPool<T>, pool: AavePools) => {
+export const getParamPerPool = <T>(
+  { proto, ithacaArbitrum }: iParamsPerPool<T>,
+  pool: AavePools
+) => {
   switch (pool) {
+    case AavePools.ithacaArbitrum:
+      return ithacaArbitrum;
     case AavePools.proto:
       return proto;
     default:

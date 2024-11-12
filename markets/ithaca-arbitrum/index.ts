@@ -1,4 +1,4 @@
-import { IAaveConfiguration, eEthereumNetwork } from '../../helpers/types';
+import { IIthacaArbitrumConfiguration, eEthereumNetwork } from '../../helpers/types';
 
 import { CommonsConfig } from './commons';
 import { strategyUSDC, strategyWETH } from './reservesConfigs';
@@ -7,7 +7,7 @@ import { strategyUSDC, strategyWETH } from './reservesConfigs';
 // POOL--SPECIFIC PARAMS
 // ----------------
 
-export const IthacaArbitrumConfig: IAaveConfiguration = {
+export const IthacaArbitrumConfig: IIthacaArbitrumConfiguration = {
   ...CommonsConfig,
   MarketId: 'Ithaca Arbitrum Market',
   ProviderId: 1,

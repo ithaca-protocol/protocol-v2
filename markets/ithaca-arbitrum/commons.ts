@@ -15,7 +15,7 @@ export const CommonsConfig: ICommonConfiguration = {
   ATokenNamePrefix: 'Ithaca Arbitrum Market',
   StableDebtTokenNamePrefix: 'Ithaca Arbitrum Market stable debt',
   VariableDebtTokenNamePrefix: 'Ithaca Arbitrum Market variable debt',
-  SymbolPrefix: 'Arb',
+  SymbolPrefix: 'IthArb',
   ProviderId: 0, // Overriden in index.ts
   OracleQuoteCurrency: 'USD',
   OracleQuoteUnit: oneUsd.toString(),

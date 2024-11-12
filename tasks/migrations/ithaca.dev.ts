@@ -6,7 +6,7 @@ import { printContracts } from '../../helpers/misc-utils';
 task('ithaca:dev', 'Deploy development enviroment')
   .addFlag('verify', 'Verify contracts at Etherscan')
   .setAction(async ({ verify }, localBRE) => {
-    const POOL_NAME = ConfigNames.Aave;
+    const POOL_NAME = ConfigNames.IthacaArbitrum;
 
     await localBRE.run('set-DRE');
 
