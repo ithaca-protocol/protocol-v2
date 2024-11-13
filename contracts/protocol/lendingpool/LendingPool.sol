@@ -606,6 +606,23 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
     }
   }
 
+  function validateIthacaWithdraw(
+    address user,
+    address asset,
+    uint256 amount
+  ) external view override {
+    ValidationLogic.validateIthacaWithdraw(
+      user,
+      asset,
+      amount,
+      _reserves,
+      _usersConfig[user],
+      _reservesList,
+      _reservesCount,
+      _getIthacaCollateralParams()
+    );
+  }
+
   /**
    * @dev Returns the state and configuration of the reserve
    * @param asset The address of the underlying asset of the reserve

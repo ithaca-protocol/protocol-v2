@@ -87,6 +87,40 @@ library ValidationLogic {
     );
   }
 
+  /**
+   * @dev Validates Ithaca withdraw action
+   * @param reserveAddress The address of the reserve
+   * @param amount The amount to be withdrawn
+   * @param reservesData The reserves state
+   * @param userConfig The user configuration
+   * @param reserves The addresses of the reserves
+   * @param reservesCount The number of reserves
+   */
+  function validateIthacaWithdraw(
+    address user,
+    address reserveAddress,
+    uint256 amount,
+    mapping(address => DataTypes.ReserveData) storage reservesData,
+    DataTypes.UserConfigurationMap storage userConfig,
+    mapping(uint256 => address) storage reserves,
+    uint256 reservesCount,
+    GenericLogic.Params memory params
+  ) external view {
+    require(
+      GenericLogic.ithacaBalanceDecreaseAllowed(
+        reserveAddress,
+        user,
+        amount,
+        reservesData,
+        userConfig,
+        reserves,
+        reservesCount,
+        params
+      ),
+      Errors.VL_TRANSFER_NOT_ALLOWED
+    );
+  }
+
   struct ValidateBorrowLocalVars {
     uint256 currentLtv;
     uint256 currentLiquidationThreshold;
