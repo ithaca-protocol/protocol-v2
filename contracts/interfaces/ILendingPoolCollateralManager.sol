@@ -58,9 +58,8 @@ interface ILendingPoolCollateralManager {
     address principal,
     address user,
     uint256 debtToCover,
-    bool receiveAToken,
-    uint256 ithacaCollateralBalance
-  ) external returns (DataTypes.LiquidationCallReturnVars memory);
+    bool receiveAToken
+  ) external returns (uint256, string memory);
 
   /**
    * @dev Ithaca fundlock can invoke this function to liquidate an undercollateralized position.

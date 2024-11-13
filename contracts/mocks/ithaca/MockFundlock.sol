@@ -96,25 +96,13 @@ contract MockFundlock is IFundlock {
     // Allow lending pool to pull debt asset
     IERC20(debtAsset).approve(_lendingPool, debtToCover);
 
-    if (collateralAsset == debtAsset) {
-      (debtLiquidated, ithacaCollateralLiquidated) = ILendingPool(_lendingPool)
-        .ithacaLiquidationCall(
-          collateralAsset,
-          debtAsset,
-          client,
-          debtToCover,
-          currentAvailableCollateral
-        );
-    } else {
-      (debtLiquidated, ithacaCollateralLiquidated) = ILendingPool(_lendingPool).liquidationCall(
-        collateralAsset,
-        debtAsset,
-        client,
-        debtToCover,
-        false,
-        currentAvailableCollateral
-      );
-    }
+    (debtLiquidated, ithacaCollateralLiquidated) = ILendingPool(_lendingPool).ithacaLiquidationCall(
+      collateralAsset,
+      debtAsset,
+      client,
+      debtToCover,
+      currentAvailableCollateral
+    );
 
     // Transfer liquidated collateral plus bonus to the receiver
     _balances[receiver][collateralAsset] += ithacaCollateralLiquidated;

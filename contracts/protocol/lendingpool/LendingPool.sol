@@ -412,7 +412,7 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
   }
 
   /**
-   * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
+   * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1.2
    * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
    *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
    * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
@@ -421,46 +421,37 @@ contract LendingPool is VersionedInitializable, ILendingPool, LendingPoolStorage
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
    * to receive the underlying collateral asset directly
-   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
    **/
   function liquidationCall(
     address collateralAsset,
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken,
-    uint256 ithacaCollateralBalance
-  ) external override whenNotPaused returns (uint256, uint256) {
-    require(msg.sender == _addressesProvider.getFundLock(), Errors.LP_CALLER_NOT_FUND_LOCK);
+    bool receiveAToken
+  ) external override whenNotPaused {
     address collateralManager = _addressesProvider.getLendingPoolCollateralManager();
 
     //solium-disable-next-line
     (bool success, bytes memory result) = collateralManager.delegatecall(
       abi.encodeWithSignature(
-        'liquidationCall(address,address,address,uint256,bool,uint256)',
+        'liquidationCall(address,address,address,uint256,bool)',
         collateralAsset,
         debtAsset,
         user,
         debtToCover,
-        receiveAToken,
-        ithacaCollateralBalance
+        receiveAToken
       )
     );
 
     require(success, Errors.LP_LIQUIDATION_CALL_FAILED);
 
-    DataTypes.LiquidationCallReturnVars memory returnVars = abi.decode(
-      result,
-      (DataTypes.LiquidationCallReturnVars)
-    );
+    (uint256 returnCode, string memory returnMessage) = abi.decode(result, (uint256, string));
 
-    require(returnVars.errorCode == 0, string(abi.encodePacked(returnVars.errorMsg)));
-
-    return (returnVars.debtLiquidated, returnVars.ithacaCollateralLiquidated);
+    require(returnCode == 0, string(abi.encodePacked(returnMessage)));
   }
 
   /**
-   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1
+   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1.2
    * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
    *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
    * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation

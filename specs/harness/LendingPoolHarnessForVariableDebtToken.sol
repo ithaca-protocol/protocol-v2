@@ -62,18 +62,9 @@ contract LendingPoolHarnessForVariableDebtToken is ILendingPool {
     address asset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken,
-    uint256 ithacaCollateralBalance
-  ) external override returns (uint256, uint256) {
-    return
-      originalPool.liquidationCall(
-        collateral,
-        asset,
-        user,
-        debtToCover,
-        receiveAToken,
-        ithacaCollateralBalance
-      );
+    bool receiveAToken
+  ) external override {
+    return originalPool.liquidationCall(collateral, asset, user, debtToCover, receiveAToken);
   }
 
   function ithacaLiquidationCall(

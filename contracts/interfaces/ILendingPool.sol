@@ -261,7 +261,7 @@ interface ILendingPool {
   function setUserUseReserveAsCollateral(address asset, bool useAsCollateral) external;
 
   /**
-   * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1
+   * @dev Function to liquidate a non-healthy position collateral-wise, with Health Factor below 1.2
    * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
    *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
    * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
@@ -270,19 +270,17 @@ interface ILendingPool {
    * @param debtToCover The debt amount of borrowed `asset` the liquidator wants to cover
    * @param receiveAToken `true` if the liquidators wants to receive the collateral aTokens, `false` if he wants
    * to receive the underlying collateral asset directly
-   * @param ithacaCollateralBalance The amount deposited as collateral in Ithaca
    **/
   function liquidationCall(
     address collateralAsset,
     address debtAsset,
     address user,
     uint256 debtToCover,
-    bool receiveAToken,
-    uint256 ithacaCollateralBalance
-  ) external returns (uint256, uint256);
+    bool receiveAToken
+  ) external;
 
   /**
-   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1
+   * @dev Function to liquidate a non-healthy position Ithaca collateral-wise, with Health Factor below 1.2
    * - The caller (liquidator) covers `debtToCover` amount of debt of the user getting liquidated, and receives
    *   a proportionally amount of the `collateralAsset` plus a bonus to cover market risk
    * @param collateralAsset The address of the underlying asset used as collateral, to receive as result of the liquidation
