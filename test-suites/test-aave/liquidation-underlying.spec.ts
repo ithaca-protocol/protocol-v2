@@ -27,18 +27,12 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
   });
 
   it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
-    const { configurator, weth, users, dai, fundlock, deployer } = testEnv;
+    const { configurator, weth, pool, users, dai } = testEnv;
     const user = users[1];
     await configurator.deactivateReserve(weth.address);
 
     await expect(
-      fundlock.liquidationCall(
-        weth.address,
-        dai.address,
-        user.address,
-        parseEther('1000'),
-        deployer.address
-      )
+      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false)
     ).to.be.revertedWith('2');
 
     await configurator.activateReserve(weth.address);
@@ -46,13 +40,7 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
     await configurator.deactivateReserve(dai.address);
 
     await expect(
-      fundlock.liquidationCall(
-        weth.address,
-        dai.address,
-        user.address,
-        parseEther('1000'),
-        deployer.address
-      )
+      pool.liquidationCall(weth.address, dai.address, user.address, parseEther('1000'), false)
     ).to.be.revertedWith('2');
 
     await configurator.activateReserve(dai.address);
@@ -133,24 +121,15 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
   });
 
   it('Liquidates the borrow', async () => {
-    const { dai, weth, users, pool, oracle, helpersContract, fundlock } = testEnv;
+    const { dai, weth, users, pool, oracle, helpersContract } = testEnv;
     const liquidator = users[3];
     const borrower = users[1];
 
     //mints dai to the liquidator
     await dai.connect(liquidator.signer).mint(await convertToCurrencyDecimals(dai.address, '1000'));
 
-    //approve fundlock to access the liquidator wallet
-    await dai.connect(liquidator.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
-
-    //deposit to fundlock
-    await fundlock
-      .connect(liquidator.signer)
-      .deposit(
-        liquidator.address,
-        dai.address,
-        await convertToCurrencyDecimals(dai.address, '1000')
-      );
+    //approve protocol to access the liquidator wallet
+    await dai.connect(liquidator.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
     const daiReserveDataBefore = await helpersContract.getReserveData(dai.address);
     const ethReserveDataBefore = await helpersContract.getReserveData(weth.address);
@@ -166,15 +145,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
 
     await increaseTime(100);
 
-    const tx = await fundlock
+    const tx = await pool
       .connect(liquidator.signer)
-      .liquidationCall(
-        weth.address,
-        dai.address,
-        borrower.address,
-        amountToLiquidate,
-        liquidator.address
-      );
+      .liquidationCall(weth.address, dai.address, borrower.address, amountToLiquidate, false);
 
     const userReserveDataAfter = await getUserData(
       pool,
@@ -253,7 +226,7 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
   });
 
   it('User 3 deposits 1000 USDC, user 4 1 WETH, user 4 borrows - drops HF, liquidates the borrow', async () => {
-    const { usdc, users, pool, oracle, weth, helpersContract, fundlock } = testEnv;
+    const { usdc, users, pool, oracle, weth, helpersContract } = testEnv;
 
     const depositor = users[3];
     const borrower = users[4];
@@ -316,17 +289,8 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
       .connect(liquidator.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
 
-    //approve fundlock to access depositor wallet
-    await usdc.connect(liquidator.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
-
-    //deposit to fundlock
-    await fundlock
-      .connect(liquidator.signer)
-      .deposit(
-        liquidator.address,
-        usdc.address,
-        await convertToCurrencyDecimals(usdc.address, '1000')
-      );
+    //approve protocol to access depositor wallet
+    await usdc.connect(liquidator.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
     const userReserveDataBefore = await helpersContract.getUserReserveData(
       usdc.address,
@@ -342,15 +306,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
       .div(2)
       .toString();
 
-    await fundlock
+    await pool
       .connect(liquidator.signer)
-      .liquidationCall(
-        weth.address,
-        usdc.address,
-        borrower.address,
-        amountToLiquidate,
-        liquidator.address
-      );
+      .liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, false);
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(
       usdc.address,
@@ -421,7 +379,7 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
   });
 
   it('User 4 deposits 10 AAVE - drops HF, liquidates the AAVE, which results on a lower amount being liquidated', async () => {
-    const { aave, usdc, users, pool, oracle, helpersContract, fundlock } = testEnv;
+    const { aave, usdc, users, pool, oracle, helpersContract } = testEnv;
 
     const depositor = users[3];
     const borrower = users[4];
@@ -452,17 +410,8 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
       .connect(liquidator.signer)
       .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
 
-    //approve fundlock to access depositor wallet
+    //approve protocol to access depositor wallet
     await usdc.connect(liquidator.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
-
-    //deposit to fundlock
-    await fundlock
-      .connect(liquidator.signer)
-      .deposit(
-        liquidator.address,
-        usdc.address,
-        await convertToCurrencyDecimals(usdc.address, '1000')
-      );
 
     const userReserveDataBefore = await helpersContract.getUserReserveData(
       usdc.address,
@@ -480,15 +429,9 @@ makeSuite('LendingPool liquidation - liquidator receiving the underlying asset',
     const collateralPrice = await oracle.getAssetPrice(aave.address);
     const principalPrice = await oracle.getAssetPrice(usdc.address);
 
-    await fundlock
+    await pool
       .connect(liquidator.signer)
-      .liquidationCall(
-        aave.address,
-        usdc.address,
-        borrower.address,
-        amountToLiquidate,
-        liquidator.address
-      );
+      .liquidationCall(aave.address, usdc.address, borrower.address, amountToLiquidate, false);
 
     const userReserveDataAfter = await helpersContract.getUserReserveData(
       usdc.address,

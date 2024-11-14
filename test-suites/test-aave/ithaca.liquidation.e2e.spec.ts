@@ -5,13 +5,15 @@ import { APPROVAL_AMOUNT_LENDING_POOL, oneEther } from '../../helpers/constants'
 import { convertToCurrencyDecimals } from '../../helpers/contracts-helpers';
 import { increaseTime } from '../../helpers/misc-utils';
 import { ProtocolErrors, RateMode } from '../../helpers/types';
+import { MockIthacaFeed } from '../../types';
 import { makeSuite } from './helpers/make-suite';
 import { getUserData } from './helpers/utils/helpers';
 
 const chai = require('chai');
 const { expect } = chai;
-
 makeSuite('', (testEnv) => {
+  const { INVALID_HF } = ProtocolErrors;
+
   describe('test calculateUserData for reserves', () => {
     before('Before LendingPool liquidation: set config', async () => {
       BigNumber.config({ DECIMAL_PLACES: 0, ROUNDING_MODE: BigNumber.ROUND_DOWN });
@@ -53,12 +55,11 @@ makeSuite('', (testEnv) => {
 
     it('Deposits usdc', async () => {
       const { weth, users, pool, usdc, oracle } = testEnv;
-
       const borrower = users[1];
 
       const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '1');
 
-      //mints USDC to borrower
+      //mints USDC to user
       await usdc.connect(borrower.signer).mint(amountUSDCtoDeposit);
 
       //approve protocol to access borrower wallet
@@ -95,7 +96,7 @@ makeSuite('', (testEnv) => {
 
       const amountWETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1');
 
-      //mints weth to borrower
+      //mints weth to user
       await weth.connect(borrower.signer).mint(amountWETHtoDeposit);
 
       //approve protocol to access borrower wallet
@@ -118,6 +119,29 @@ makeSuite('', (testEnv) => {
 });
 
 makeSuite('', (testEnv) => {
+  describe('only lending pool can call ithacaLiquidationCall()', () => {
+    it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
+      const { weth, pool, users, usdc } = testEnv;
+
+      const liquidator = users[4];
+      const borrower = users[3];
+
+      await expect(
+        pool
+          .connect(liquidator.signer)
+          .ithacaLiquidationCall(
+            weth.address,
+            usdc.address,
+            borrower.address,
+            (2e18).toFixed(0),
+            liquidator.address
+          )
+      ).to.be.revertedWith('81');
+    });
+  });
+});
+
+makeSuite('', (testEnv) => {
   const { INVALID_HF } = ProtocolErrors;
 
   describe('liquidate usdc borrowings', () => {
@@ -130,19 +154,13 @@ makeSuite('', (testEnv) => {
     });
 
     it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
-      const { configurator, weth, pool, users, usdc, fundlock, deployer } = testEnv;
+      const { configurator, weth, pool, users, usdc } = testEnv;
 
       const user = users[1];
       await configurator.deactivateReserve(weth.address);
 
       await expect(
-        fundlock.liquidationCall(
-          weth.address,
-          usdc.address,
-          user.address,
-          parseEther('1000'),
-          deployer.address
-        )
+        pool.liquidationCall(weth.address, usdc.address, user.address, parseEther('1000'), false)
       ).to.be.revertedWith('2');
 
       await configurator.activateReserve(weth.address);
@@ -150,13 +168,7 @@ makeSuite('', (testEnv) => {
       await configurator.deactivateReserve(usdc.address);
 
       await expect(
-        fundlock.liquidationCall(
-          weth.address,
-          usdc.address,
-          user.address,
-          parseEther('1000'),
-          deployer.address
-        )
+        pool.liquidationCall(weth.address, usdc.address, user.address, parseEther('1000'), false)
       ).to.be.revertedWith('2');
 
       await configurator.activateReserve(usdc.address);
@@ -189,19 +201,19 @@ makeSuite('', (testEnv) => {
       await weth.connect(borrower.signer).mint(amountETHtoDeposit);
 
       //approve fundlock to access borrower wallet
-      await weth.connect(borrower.signer).approve(fundlock.address, amountETHtoDeposit);
+      await weth.connect(borrower.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
 
-      //deposit to fundlock
+      //borrower deposits 1000 USDC
       await fundlock
         .connect(borrower.signer)
         .deposit(borrower.address, weth.address, amountETHtoDeposit);
 
-      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
+      const userGlobalData = await pool.getUserAccountData(borrower.address);
 
       const usdcPrice = await oracle.getAssetPrice(usdc.address);
       const amountUSDCToBorrow = await convertToCurrencyDecimals(
         usdc.address,
-        new BigNumber(userGlobalDataBefore.availableBorrowsETH.toString())
+        new BigNumber(userGlobalData.availableBorrowsETH.toString())
           .div(usdcPrice.toString())
           .multipliedBy(0.9502)
           .toFixed(0)
@@ -245,21 +257,26 @@ makeSuite('', (testEnv) => {
       const borrower = users[1];
       const liquidator = users[4];
 
-      const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '10000');
+      const userReserveDataBefore = await getUserData(
+        pool,
+        helpersContract,
+        usdc.address,
+        borrower.address
+      );
+      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
+
+      const amountToLiquidate = userGlobalDataBefore.totalDebtETH;
 
       //mints USDC to liquidator
-      await usdc.connect(liquidator.signer).mint(amountUSDCtoDeposit);
+      await usdc.connect(liquidator.signer).mint(amountToLiquidate);
 
       //approve fundlock to access liquidator wallet
-      await usdc.connect(liquidator.signer).approve(fundlock.address, amountUSDCtoDeposit);
+      await usdc.connect(liquidator.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
 
       //deposit to fundlock
       await fundlock
         .connect(liquidator.signer)
-        .deposit(liquidator.address, usdc.address, amountUSDCtoDeposit);
-
-      const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
-      const amountToLiquidate = userGlobalDataBefore.totalDebtETH;
+        .deposit(liquidator.address, usdc.address, amountToLiquidate);
 
       await increaseTime(100);
 
@@ -273,10 +290,19 @@ makeSuite('', (testEnv) => {
           liquidator.address
         );
 
+      const userReserveDataAfter = await getUserData(
+        pool,
+        helpersContract,
+        usdc.address,
+        borrower.address
+      );
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
-      expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.lt(
-        userGlobalDataBefore.totalDebtETH
+      expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.bignumber.lt(
+        userGlobalDataBefore.totalDebtETH.toString()
+      );
+      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.lt(
+        userReserveDataBefore.currentVariableDebt.toString()
       );
     });
   });
@@ -295,19 +321,13 @@ makeSuite('', (testEnv) => {
     });
 
     it("It's not possible to liquidate on a non-active collateral or a non active principal", async () => {
-      const { configurator, weth, pool, users, usdc, fundlock, deployer } = testEnv;
+      const { configurator, weth, pool, users, usdc } = testEnv;
 
       const user = users[1];
       await configurator.deactivateReserve(usdc.address);
 
       await expect(
-        fundlock.liquidationCall(
-          weth.address,
-          usdc.address,
-          user.address,
-          parseEther('1000'),
-          deployer.address
-        )
+        pool.liquidationCall(weth.address, usdc.address, user.address, parseEther('1000'), false)
       ).to.be.revertedWith('2');
 
       await configurator.activateReserve(usdc.address);
@@ -315,43 +335,34 @@ makeSuite('', (testEnv) => {
       await configurator.deactivateReserve(weth.address);
 
       await expect(
-        fundlock.liquidationCall(
-          weth.address,
-          usdc.address,
-          user.address,
-          parseEther('1000'),
-          deployer.address
-        )
+        pool.liquidationCall(weth.address, usdc.address, user.address, parseEther('1000'), false)
       ).to.be.revertedWith('2');
 
       await configurator.activateReserve(weth.address);
     });
 
     it('Deposits ithaca collateral, borrows weth', async () => {
-      const { usdc, weth, users, pool, oracle, fundlock } = testEnv;
+      const { usdc, weth, users, pool, fundlock } = testEnv;
 
       const depositor = users[0];
       const borrower = users[1];
 
+      const amountETHtoDeposit = await convertToCurrencyDecimals(weth.address, '2');
+
       //mints WETH to depositor
-      await weth
-        .connect(depositor.signer)
-        .mint(await convertToCurrencyDecimals(weth.address, '1000'));
+      await weth.connect(depositor.signer).mint(amountETHtoDeposit);
 
       //approve protocol to access depositor wallet
       await weth.connect(depositor.signer).approve(pool.address, APPROVAL_AMOUNT_LENDING_POOL);
 
       //depositor deposits 2 WETH
-      const amountOfETHtoDeposit = await convertToCurrencyDecimals(weth.address, '1000');
-
       await pool
         .connect(depositor.signer)
-        .deposit(weth.address, amountOfETHtoDeposit, depositor.address, '0');
+        .deposit(weth.address, amountETHtoDeposit, depositor.address, '0');
 
+      const amountUSDCtoDeposit = await convertToCurrencyDecimals(usdc.address, '10');
       //mints USDC to borrower
-      await usdc
-        .connect(borrower.signer)
-        .mint(await convertToCurrencyDecimals(usdc.address, '1000'));
+      await usdc.connect(borrower.signer).mint(amountUSDCtoDeposit);
 
       //approve fundlock to access borrower wallet
       await usdc.connect(borrower.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
@@ -359,17 +370,11 @@ makeSuite('', (testEnv) => {
       //deposit to fundlock
       await fundlock
         .connect(borrower.signer)
-        .deposit(
-          borrower.address,
-          usdc.address,
-          await convertToCurrencyDecimals(usdc.address, '1000')
-        );
+        .deposit(borrower.address, usdc.address, amountUSDCtoDeposit);
 
-      const borrowerGlobalDataBefore = await pool.getUserAccountData(borrower.address);
+      const userGlobalData = await pool.getUserAccountData(borrower.address);
 
-      const amountWETHtoBorrow = new BigNumber(
-        borrowerGlobalDataBefore.availableBorrowsETH.toString()
-      )
+      const amountWETHtoBorrow = new BigNumber(userGlobalData.availableBorrowsETH.toString())
         .multipliedBy(0.8)
         .toFixed(0);
 
@@ -377,9 +382,9 @@ makeSuite('', (testEnv) => {
         .connect(borrower.signer)
         .borrow(weth.address, amountWETHtoBorrow, RateMode.Variable, '0', borrower.address);
 
-      const borrowerGlobalDataAfter = await pool.getUserAccountData(borrower.address);
+      const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
-      expect(borrowerGlobalDataAfter.currentLiquidationThreshold.toString()).to.be.bignumber.equal(
+      expect(userGlobalDataAfter.currentLiquidationThreshold.toString()).to.be.bignumber.equal(
         '10000',
         INVALID_HF
       );
@@ -411,23 +416,6 @@ makeSuite('', (testEnv) => {
       const borrower = users[1];
       const liquidator = users[4];
 
-      //mints WETH to liquidator
-      await weth
-        .connect(liquidator.signer)
-        .mint(await convertToCurrencyDecimals(weth.address, '1000000'));
-
-      //approve fundlock to access liquidator wallet
-      await weth.connect(liquidator.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
-
-      //deposit to fundlock
-      await fundlock
-        .connect(liquidator.signer)
-        .deposit(
-          liquidator.address,
-          weth.address,
-          await convertToCurrencyDecimals(weth.address, '1000000')
-        );
-
       const userReserveDataBefore = await getUserData(
         pool,
         helpersContract,
@@ -437,6 +425,16 @@ makeSuite('', (testEnv) => {
       const userGlobalDataBefore = await pool.getUserAccountData(borrower.address);
 
       const amountToLiquidate = userGlobalDataBefore.totalDebtETH;
+      //mints WETH to liquidator
+      await weth.connect(liquidator.signer).mint(amountToLiquidate);
+
+      //approve fundlock to access liquidator wallet
+      await weth.connect(liquidator.signer).approve(fundlock.address, APPROVAL_AMOUNT_LENDING_POOL);
+
+      //deposit to fundlock
+      await fundlock
+        .connect(liquidator.signer)
+        .deposit(liquidator.address, weth.address, amountToLiquidate);
 
       await increaseTime(100);
 
@@ -458,13 +456,12 @@ makeSuite('', (testEnv) => {
       );
       const userGlobalDataAfter = await pool.getUserAccountData(borrower.address);
 
-      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.lt(
-        userReserveDataBefore.currentVariableDebt.toString()
-      );
       expect(userGlobalDataAfter.totalDebtETH.toString()).to.be.bignumber.lt(
         userGlobalDataBefore.totalDebtETH.toString()
       );
-      expect(userGlobalDataAfter.availableBorrowsETH.toString()).to.be.bignumber.gt(0);
+      expect(userReserveDataAfter.currentVariableDebt.toString()).to.be.bignumber.lt(
+        userReserveDataBefore.currentVariableDebt.toString()
+      );
     });
   });
 });

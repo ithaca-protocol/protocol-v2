@@ -255,7 +255,7 @@ makeSuite('Pausable Pool', (testEnv: TestEnv) => {
 
     // Do liquidation
     await expect(
-      pool.liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, true, 0)
+      pool.liquidationCall(weth.address, usdc.address, borrower.address, amountToLiquidate, true)
     ).revertedWith(LP_IS_PAUSED);
 
     // Unpause pool
