@@ -85,6 +85,7 @@ interface IUiPoolDataProviderV3 {
     uint256 scaledVariableDebt;
     uint256 principalStableDebt;
     uint256 stableBorrowLastUpdateTimestamp;
+    uint256 ithacaBalance;
   }
 
   struct BaseCurrencyInfo {

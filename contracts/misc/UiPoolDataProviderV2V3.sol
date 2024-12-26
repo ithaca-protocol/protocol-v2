@@ -18,6 +18,7 @@ import {IChainlinkAggregator} from '../interfaces/IChainlinkAggregator.sol';
 import {DefaultReserveInterestRateStrategy} from '../protocol/lendingpool/DefaultReserveInterestRateStrategy.sol';
 import {IERC20DetailedBytes} from './interfaces/IERC20DetailedBytes.sol';
 import {ILendingRateOracle} from '../interfaces/ILendingRateOracle.sol';
+import {IFundlock} from '../interfaces/ithaca/IFundlock.sol';
 
 contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
   using WadRayMath for uint256;
@@ -178,6 +179,7 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
     address user
   ) external view override returns (UserReserveData[] memory, uint8) {
     ILendingPool lendingPool = ILendingPool(provider.getLendingPool());
+    IFundlock fundlock = IFundlock(provider.getFundLock());
     address[] memory reserves = lendingPool.getReservesList();
     DataTypes.UserConfigurationMap memory userConfig = lendingPool.getUserConfiguration(user);
 
@@ -209,6 +211,8 @@ contract UiPoolDataProviderV2V3 is IUiPoolDataProviderV3 {
           ).getUserLastUpdated(user);
         }
       }
+
+      userReservesData[i].ithacaBalance = fundlock.balanceSheet(user, reserves[i]);
     }
 
     // Return 0 to be compatible with v3 userEmodeCategoryId return
