@@ -51,38 +51,36 @@ contract MockFundlock is IFundlock {
       debtAsset,
       client,
       debtToCover,
-      receiver,
       currentAvailableCollateral
     );
+
+    // Deduct debt repaid during liquidation from liquidator balance
+    _balances[msg.sender][debtAsset] = liquidatorDebtAssetBalance - debtLiquidated;
 
     // Deduct collateral from client balance after liquidation
     _balances[client][collateralAsset] = currentAvailableCollateral - ithacaCollateralLiquidated;
 
-    // Deduct debt repaid during liquidation from liquidator balance
-    _balances[msg.sender][debtAsset] = liquidatorDebtAssetBalance - debtLiquidated;
+    // Transfer liquidated collateral plus bonus to the receiver
+    _balances[receiver][collateralAsset] += ithacaCollateralLiquidated;
   }
 
   function clientFundsLiquidationCall(
     address debtAsset,
     address client,
-    uint256 debtToCover,
-    address receiver
+    uint256 debtToCover
   ) external {
     uint256 currentAvailableCollateral = _balances[client][debtAsset];
 
-    (uint256 debtLiquidated, uint256 collateralLiquidated) = _liquidationCall(
+    (uint256 debtLiquidated, ) = _liquidationCall(
       debtAsset,
       debtAsset,
       client,
       debtToCover,
-      receiver,
       currentAvailableCollateral
     );
 
     // Deduct collateral plus debt from client balance after liquidation
-    _balances[client][debtAsset] =
-      currentAvailableCollateral -
-      (debtLiquidated + collateralLiquidated);
+    _balances[client][debtAsset] = currentAvailableCollateral - debtLiquidated;
   }
 
   function _liquidationCall(
@@ -90,7 +88,6 @@ contract MockFundlock is IFundlock {
     address debtAsset,
     address client,
     uint256 debtToCover,
-    address receiver,
     uint256 currentAvailableCollateral
   ) internal returns (uint256 debtLiquidated, uint256 ithacaCollateralLiquidated) {
     // Allow lending pool to pull debt asset
@@ -103,9 +100,6 @@ contract MockFundlock is IFundlock {
       debtToCover,
       currentAvailableCollateral
     );
-
-    // Transfer liquidated collateral plus bonus to the receiver
-    _balances[receiver][collateralAsset] += ithacaCollateralLiquidated;
 
     // Revoke approval
     IERC20(debtAsset).approve(_lendingPool, 0);
